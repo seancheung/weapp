@@ -2,10 +2,7 @@ import { canvasToTempFilePath, getImageInfo, wait } from './wrap'
 declare const wx: any
 
 export declare namespace Color {
-  interface GradiantStop {
-    stop: number
-    color: string
-  }
+  type GradiantStop = [number, string]
   interface Gradiant {
     type: string
   }
@@ -121,6 +118,18 @@ export declare namespace Clip {
   }
 }
 export type Clip = Clip.Rectangle | Clip.Circle | Clip.Path
+export declare namespace Transform {
+  interface Translate {
+    x?: number
+    y?: number
+  }
+  type Scale = { x?: number; y?: number } | number
+}
+export interface Transform {
+  translate?: Transform.Translate
+  rotate?: number
+  scale?: Transform.Scale
+}
 export declare namespace Layer {
   interface Base {
     type: string
@@ -129,6 +138,9 @@ export declare namespace Layer {
     fill?: Fill | true
     stroke?: Stroke | true
     clip?: Clip
+    scale?: Transform.Scale
+    rotate?: number
+    translate?: Transform.Translate
   }
   interface Rect extends Base {
     type: 'rect'
@@ -220,12 +232,12 @@ export function resolveColor(ctx: any, color: Color): any {
   switch (color.type) {
     case 'linear': {
       const gd = ctx.createLinearGradient(color.x0, color.y0, color.x1, color.y1)
-      color.stops.forEach(s => gd.addColorStop(s.stop, s.color))
+      color.stops.forEach(s => gd.addColorStop(...s))
       return gd
     }
     case 'circular': {
       const gd = ctx.createCircularGradient(color.x, color.y, color.radius)
-      color.stops.forEach(s => gd.addColorStop(s.stop, s.color))
+      color.stops.forEach(s => gd.addColorStop(...s))
       return gd
     }
     case 'pattern':
@@ -266,6 +278,22 @@ export function applyPath(ctx: any, points: Point[], close?: boolean): void {
   })
   if (close) {
     ctx.closePath()
+  }
+}
+export function applyTransform(ctx: any, transform: Transform): void {
+  const { translate, rotate, scale } = transform
+  if (translate) {
+    ctx.translate(translate.x, translate.y)
+  }
+  if (rotate) {
+    ctx.rotate(rotate)
+  }
+  if (scale) {
+    if (typeof scale === 'number') {
+      ctx.scale(scale, scale)
+    } else {
+      ctx.scale(scale.x, scale.y)
+    }
   }
 }
 export function applyClip(ctx: any, clip: Clip): void {
@@ -377,6 +405,7 @@ export function applyFont(ctx: any, font: Font): void {
 }
 export function drawLayer(ctx: any, layer: Layer): void {
   ctx.save()
+  applyTransform(ctx, { translate: layer.translate, rotate: layer.rotate, scale: layer.scale })
   if (layer.clip) {
     applyClip(ctx, layer.clip)
   }
