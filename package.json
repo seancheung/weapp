@@ -1,0 +1,42 @@
+{
+  "name": "@schoolpal/wechat",
+  "version": "0.1.0",
+  "description": "Wechat miniprogram utilities",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/seancheung/wechat-mp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seancheung/wechat-mp/issues"
+  },
+  "homepage": "https://github.com/seancheung/wechat-mp#readme",
+  "keywords": [
+    "wechat",
+    "wx",
+    "miniprogram",
+    "mpvue"
+  ],
+  "author": "Sean Cheung",
+  "license": "MIT",
+  "scripts": {
+    "format": "prettier --write \"{src}/**/*.{ts,js,json}\"",
+    "lint": "tslint 'src/**/*.ts'",
+    "prebuild": "del-cli \"lib/**\" \"!lib\" \"!.gitignore\"",
+    "build": "tsc",
+    "postbuild": "babel lib -d lib"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "babel-plugin-transform-async-to-promises": "^0.8.4",
+    "del-cli": "^1.1.0",
+    "prettier": "^1.15.2",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "typescript": "^3.1.3"
+  },
+  "dependencies": {}
+}
