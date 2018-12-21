@@ -1,4 +1,4 @@
-import * as $wx from './wrap'
+import * as wx from './wrap'
 
 /**
  * Encode query string
@@ -44,8 +44,8 @@ export function decodeQuery(query: Record<string, string>): Record<string, strin
  * @param scope Scope
  */
 export async function authorize(scope: string): Promise<void> {
-  const { authSetting } = await $wx.getSetting({})
+  const { authSetting } = await wx.getSetting()
   if (!authSetting[scope]) {
-    await $wx.authorize({ scope })
+    await wx.authorize({ scope })
   }
 }

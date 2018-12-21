@@ -1,4 +1,5 @@
 import { canvasToTempFilePath, getImageInfo, wait } from './wrap'
+declare const wx: any
 
 export declare namespace Color {
   interface GradiantStop {
@@ -184,7 +185,7 @@ export interface Export {
   fileType?: 'jpg' | 'png'
   quality?: number
 }
-export type Downloader = (src: string) => Promise<wx.ImageInfoResponse>
+export type Downloader = (src: string) => Promise<any>
 export interface Options {
   layers: Layer[]
   default?: Style
@@ -192,7 +193,7 @@ export interface Options {
   downloader?: Downloader
 }
 export async function resolveLayers(layers: Layer[], downloader: Downloader): Promise<Layer[]> {
-  const map: Record<string, wx.ImageInfoResponse> = layers
+  const map: Record<string, any> = layers
     .filter(l => l.type === 'image')
     .reduce((t: any, l) => {
       const { src } = l as Layer.Image
