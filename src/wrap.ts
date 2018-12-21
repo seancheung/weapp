@@ -54,6 +54,20 @@ export function promisee<R>(func: Function, context?: any): PromiseFunc<R> {
       })
     })
 }
+/**
+ * Promisify a function without rejection
+ *
+ * @param func Function with a non-standard callback
+ * @param context Context
+ */
+export function wait<R>(func: Function, context?: any): PromiseFunc<R> {
+  return (...args: any[]) =>
+    new Promise(resolve => {
+      func.call(context, ...args, (res: R) => {
+        resolve(res)
+      })
+    })
+}
 
 export const request = promisify<wx.RequestOptions, wx.Response>(wx.request)
 export const downloadFile = promisify<wx.DownloadOptions, wx.DownloadResponse>(wx.downloadFile)

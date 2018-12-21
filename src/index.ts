@@ -118,5 +118,7 @@ declare global {
   const wx: wx
 }
 
-export * from './utils'
-export * from './canvas'
+import * as canvas from './canvas'
+import * as utils from './utils'
+import * as wx from './wrap'
+export { utils, canvas, wx }
