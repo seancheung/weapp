@@ -1,31 +1,24 @@
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
-type WrappedFunc<TOptions extends wx.CallbackOptions<TSuccess, TFail>, TSuccess, TFail> = (
+type WrappedFunc<TOptions extends wx.CallbackOptions<TSuccess>, TSuccess> = (
   opts?: Omit<TOptions, wx.Callbacks>
 ) => Promise<TSuccess>
-type Promisifed<
-  TOptions extends wx.CallbackOptions<TSuccess, TFail>,
-  TSuccess,
-  TFail
-> = WrappedFunc<TOptions, TSuccess, TFail>
+type Promisifed<TOptions extends wx.CallbackOptions<TSuccess>, TSuccess> = WrappedFunc<
+  TOptions,
+  TSuccess
+>
 /**
- * Promisify a wx function
+ * Promisify a wechat function
  *
  * @param func wx function
- * @param context Context
  */
-export function promisify<
-  TOptions extends wx.CallbackOptions<TSuccess, TFail>,
-  TSuccess = any,
-  TFail = any
->(
-  func: wx.CallbackFunc<TOptions, TSuccess, TFail>,
-  context?: any
-): Promisifed<TOptions, TSuccess, TFail> {
+export function promisify<TOptions extends wx.CallbackOptions<TSuccess>, TSuccess>(
+  func: wx.CallbackFunc<TOptions, TSuccess>
+): Promisifed<TOptions, TSuccess> {
   return (opts: wx.CallbackOptions) =>
     opts.success || opts.fail || opts.complete
-      ? func.call(context, opts)
+      ? func.call(wx, opts)
       : new Promise((resolve, reject) => {
-          func.call(context, {
+          func.call(wx, {
             ...opts,
             success: resolve,
             fail: (res: any) => {
@@ -42,23 +35,33 @@ export function promisify<
         })
 }
 
-export const request = promisify<wx.RequestOptions, wx.Response>(wx.request, wx)
-export const downloadFile = promisify<wx.DownloadOptions, wx.DownloadResponse>(wx.downloadFile, wx)
-export const uploadFile = promisify<wx.UploadOptions, wx.UploadResponse>(wx.uploadFile, wx)
-export const getImageInfo = promisify<wx.ImageInfoOptions, wx.ImageInfoResponse>(
-  wx.getImageInfo,
-  wx
-)
-export function saveToAlbum(filePath: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    wx.saveImageToPhotosAlbum({
-      filePath,
-      success: () => {
-        resolve()
-      },
-      fail: () => {
-        reject(new Error())
-      }
+type PromiseFunc<R> = (...args: any[]) => Promise<R>
+/**
+ * Promisify a function
+ *
+ * @param func Function with a standard callback
+ * @param context Context
+ */
+export function promisee<R>(func: Function, context?: any): PromiseFunc<R> {
+  return (...args: any[]) =>
+    new Promise((resolve, reject) => {
+      func.call(context, ...args, (err: Error, res: R) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(res)
+        }
+      })
     })
-  })
 }
+
+export const request = promisify<wx.RequestOptions, wx.Response>(wx.request)
+export const downloadFile = promisify<wx.DownloadOptions, wx.DownloadResponse>(wx.downloadFile)
+export const uploadFile = promisify<wx.UploadOptions, wx.UploadResponse>(wx.uploadFile)
+export const getImageInfo = promisify<wx.ImageInfoOptions, wx.ImageInfoResponse>(wx.getImageInfo)
+export const saveImageToPhotosAlbum = promisify<wx.SaveImageOptions, void>(
+  wx.saveImageToPhotosAlbum
+)
+export const canvasToTempFilePath = promisify<wx.CanvasToFileOptions, wx.CanvasToFileResponse>(
+  wx.canvasToTempFilePath
+)

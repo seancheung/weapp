@@ -1,9 +1,22 @@
+/**
+ * Encode query string
+ *
+ * @param query Query object
+ * @returns Encoded query string
+ */
 export function encodeQuery(query: Record<string, any>): string {
   return Object.entries(query)
     .filter(([, v]) => v != null)
     .map(([k, v]) => `${k}=${v}`)
     .join('&')
 }
+
+/**
+ * Decod query object
+ *
+ * @param query Query object
+ * @returns Decoded query object
+ */
 export function decodeQuery(query: Record<string, string>): Record<string, string> {
   let qs
   if (query.scene) {

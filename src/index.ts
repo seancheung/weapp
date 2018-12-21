@@ -87,6 +87,23 @@ declare global {
     interface ImageInfoOptions extends CallbackOptions<ImageInfoResponse> {
       src: string
     }
+    interface SaveImageOptions extends CallbackOptions<void> {
+      filePath: string
+    }
+    interface CanvasToFileResponse {
+      tempFilePath: string
+    }
+    interface CanvasToFileOptions extends CallbackOptions<CanvasToFileResponse> {
+      x?: number
+      y?: number
+      width?: number
+      height?: number
+      destWidth?: number
+      destHeight?: number
+      canvasId: string
+      fileType?: 'png' | 'jpg'
+      quality?: number
+    }
   }
   interface wx {
     canIUse(schema: string): boolean
@@ -94,9 +111,9 @@ declare global {
     downloadFile(options: wx.DownloadOptions): wx.DownloadTask
     uploadFile(options: wx.UploadOptions): wx.UploadTask
     getImageInfo(options: wx.ImageInfoOptions): void
-    createCanvasContext(canvasId: string): any
-    canvasToTempFilePath(options: any): any
-    saveImageToPhotosAlbum(options: any): any
+    saveImageToPhotosAlbum(options: wx.SaveImageOptions): void
+    canvasToTempFilePath(options: wx.CanvasToFileOptions): void
+    createCanvasContext(canvasId: string, context?: any): any
   }
   const wx: wx
 }
