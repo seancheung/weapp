@@ -1,5 +1,7 @@
 import * as wx from './wrap'
 
+type Parameter<T extends (p: any) => any> = T extends (p: infer P) => any ? P : never
+
 /**
  * Encode query string
  *
@@ -48,4 +50,15 @@ export async function authorize(scope: string): Promise<void> {
   if (!authSetting[scope]) {
     await wx.authorize({ scope })
   }
+}
+
+type getLocation = typeof wx.getLocation
+/**
+ * Authorize and get location
+ *
+ * @param opts options
+ */
+export async function getLocation(opts: Parameter<getLocation>): ReturnType<getLocation> {
+  await authorize('scope.userLocation')
+  return wx.getLocation(opts)
 }
