@@ -169,7 +169,7 @@ export declare namespace Layer {
   }
 }
 export type Layer = Layer.Rect | Layer.Arc | Layer.Image | Layer.Text | Layer.Path
-export interface Settings {
+export interface Style {
   stroke?: Stroke
   fill?: Fill
   font?: Font
@@ -184,12 +184,14 @@ export interface Export {
   fileType?: 'jpg' | 'png'
   quality?: number
 }
-export interface Canvas {
-  default?: Settings
+export type Downloader = (src: string) => Promise<wx.ImageInfoResponse>
+export interface Options {
   layers: Layer[]
+  default?: Style
   dump?: Export
+  downloader?: Downloader
 }
-export async function resolveLayers(layers: Layer[]): Promise<Layer[]> {
+export async function resolveLayers(layers: Layer[], downloader: Downloader): Promise<Layer[]> {
   const map: Record<string, wx.ImageInfoResponse> = layers
     .filter(l => l.type === 'image')
     .reduce((t: any, l) => {
@@ -199,9 +201,7 @@ export async function resolveLayers(layers: Layer[]): Promise<Layer[]> {
       }
       return t
     }, {})
-  await Promise.all(
-    Object.keys(map).map(src => getImageInfo({ src }).then(info => (map[src] = info)))
-  )
+  await Promise.all(Object.keys(map).map(src => downloader(src).then(info => (map[src] = info))))
   return layers.map(layer => {
     if (layer.type !== 'image') {
       return Object.assign({ x: 0, y: 0 }, layer)
@@ -437,14 +437,17 @@ export function drawImage(ctx: any, layer: Layer.Image): void {
  * Draw graphics to canvas
  *
  * @param canvasId Canvas ID
- * @param canvas Canvas config
+ * @param options Canvas options
  * @returns Exported file path
  */
-export async function draw(canvasId: string, canvas: Canvas): Promise<void | string> {
-  const layers = await resolveLayers(canvas.layers)
+export async function draw(canvasId: string, options: Options): Promise<void | string> {
+  const layers = await resolveLayers(
+    options.layers,
+    options.downloader || (src => getImageInfo({ src }))
+  )
   const ctx = wx.createCanvasContext(canvasId)
-  if (canvas.default) {
-    const { stroke, fill, font } = canvas.default
+  if (options.default) {
+    const { stroke, fill, font } = options.default
     if (stroke) {
       applyStroke(ctx, stroke)
     }
@@ -457,7 +460,7 @@ export async function draw(canvasId: string, canvas: Canvas): Promise<void | str
   }
   ctx.save()
   layers.forEach(layer => drawLayer(ctx, layer))
-  const { dump } = canvas
+  const { dump } = options
   await wait(ctx.draw, ctx)(false)
   if (dump) {
     const { tempFilePath } = await canvasToTempFilePath({
