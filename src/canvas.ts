@@ -1,6 +1,13 @@
 import { canvasToTempFilePath, getImageInfo, wait } from './wrap'
 declare const wx: any
 
+type ResolveType<T extends PromiseLike<any>> = T extends PromiseLike<infer R> ? R : never
+type ImageInfo = ResolveType<ReturnType<typeof getImageInfo>>
+interface Vector2 {
+  x: number
+  y: number
+}
+
 export declare namespace Color {
   type GradiantStop = [number, string]
   interface Gradiant {
@@ -98,9 +105,9 @@ export declare namespace Point {
 export type Point = Point.Linear | Point.Arc | Point.Quadratic | Point.Cubic
 export declare namespace Clip {
   interface Shape {
+    type: string
     x: number
     y: number
-    type: string
   }
   interface Rectangle extends Shape {
     type: 'rect'
@@ -118,17 +125,10 @@ export declare namespace Clip {
   }
 }
 export type Clip = Clip.Rectangle | Clip.Circle | Clip.Path
-export declare namespace Transform {
-  interface Translate {
-    x?: number
-    y?: number
-  }
-  type Scale = { x?: number; y?: number } | number
-}
 export interface Transform {
-  translate?: Transform.Translate
+  translate?: Partial<Vector2>
   rotate?: number
-  scale?: Transform.Scale
+  scale?: Partial<Vector2> | number
 }
 export declare namespace Layer {
   interface Base {
@@ -138,14 +138,13 @@ export declare namespace Layer {
     fill?: Fill | true
     stroke?: Stroke | true
     clip?: Clip
-    scale?: Transform.Scale
-    rotate?: number
-    translate?: Transform.Translate
+    transform?: Transform
   }
   interface Rect extends Base {
     type: 'rect'
     width: number
     height: number
+    anchor?: Partial<Vector2>
   }
   interface Arc extends Base {
     type: 'arc'
@@ -173,6 +172,7 @@ export declare namespace Layer {
     width?: number
     height?: number
     crop?: Image.Crop
+    anchor?: Partial<Vector2>
   }
   interface Text extends Base {
     type: 'text'
@@ -197,7 +197,7 @@ export interface Export {
   fileType?: 'jpg' | 'png'
   quality?: number
 }
-export type Downloader = (src: string) => Promise<any>
+export type Downloader = (src: string) => Promise<ImageInfo>
 export interface Options {
   layers: Layer[]
   default?: Style
@@ -205,9 +205,10 @@ export interface Options {
   downloader?: Downloader
 }
 export async function resolveLayers(layers: Layer[], downloader: Downloader): Promise<Layer[]> {
-  const map: Record<string, any> = layers
+  type M = Record<string, ImageInfo>
+  const map: M = layers
     .filter(l => l.type === 'image')
-    .reduce((t: any, l) => {
+    .reduce((t: M, l) => {
       const { src } = l as Layer.Image
       if (!t[src]) {
         t[src] = null
@@ -245,6 +246,19 @@ export function resolveColor(ctx: any, color: Color): any {
     default:
       throw new Error('invalid gradiant type')
   }
+}
+export function resolveAnchor<T extends Layer.Rect | Layer.Image>(ctx: any, layer: T): T {
+  let { x = 0, y = 0 } = layer
+  const { width, height, anchor } = layer
+  if (anchor) {
+    if (anchor.x) {
+      x -= Math.max(Math.min(anchor.x, 1), 0) * width
+    }
+    if (anchor.y) {
+      y -= Math.max(Math.min(anchor.y, 1), 0) * height
+    }
+  }
+  return Object.assign({}, layer, { x, y, width, height })
 }
 export function applyPath(ctx: any, points: Point[], close?: boolean): void {
   points.forEach((p, i) => {
@@ -347,6 +361,9 @@ export function applyClip(ctx: any, clip: Clip): void {
   }
 }
 export function applyRect(ctx: any, layer: Layer.Rect): void {
+  if (layer.anchor) {
+    layer = resolveAnchor(ctx, layer)
+  }
   ctx.beginPath()
   ctx.rect(layer.x, layer.y, layer.width, layer.height)
 }
@@ -403,9 +420,45 @@ export function applyFont(ctx: any, font: Font): void {
     ctx.setTextBaseline(font.baseline)
   }
 }
+export function getLayerWidth(ctx: any, layer: Layer): number {
+  switch (layer.type) {
+    case 'rect':
+    case 'image':
+      return layer.width
+    case 'text': {
+      const { width } = ctx.measureText(layer.text)
+      return layer.maxWidth ? Math.min(width, layer.maxWidth) : width
+    }
+    case 'arc':
+      return layer.radius * 2
+    case 'path': {
+      const axis = layer.points.map(p => p.x)
+      return Math.max(...axis) - Math.min(...axis)
+    }
+    default:
+      throw new Error('invalid layer type')
+  }
+}
+export function getLayerHeight(ctx: any, layer: Exclude<Layer, Layer.Text>): number {
+  switch (layer.type) {
+    case 'rect':
+    case 'image':
+      return layer.height
+    case 'arc':
+      return layer.radius * 2
+    case 'path': {
+      const axis = layer.points.map(p => p.x)
+      return Math.max(...axis) - Math.min(...axis)
+    }
+    default:
+      throw new Error('invalid layer type')
+  }
+}
 export function drawLayer(ctx: any, layer: Layer): void {
   ctx.save()
-  applyTransform(ctx, { translate: layer.translate, rotate: layer.rotate, scale: layer.scale })
+  if (layer.transform) {
+    applyTransform(ctx, layer.transform)
+  }
   if (layer.clip) {
     applyClip(ctx, layer.clip)
   }
@@ -455,6 +508,9 @@ export function drawText(ctx: any, layer: Layer.Text): void {
   ctx.restore()
 }
 export function drawImage(ctx: any, layer: Layer.Image): void {
+  if (layer.anchor) {
+    layer = resolveAnchor(ctx, layer)
+  }
   const params = [layer.src, layer.x, layer.y, layer.width, layer.height]
   if (layer.crop) {
     const { x = 0, y = 0, width = layer.width, height = layer.height } = layer.crop
