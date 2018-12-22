@@ -1,4 +1,5 @@
-import { getStorage, getStorageInfo, removeStorage, setStorage } from './wrap'
+import { wrapped } from './wrap'
+const { getStorage, getStorageInfo, removeStorage, setStorage } = wrapped
 
 /**
  * Get storage

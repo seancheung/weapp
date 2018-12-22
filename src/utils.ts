@@ -1,4 +1,4 @@
-import * as wx from './wrap'
+import { wrapped as wx } from './wrap'
 
 type Parameter<T extends (p: any) => any> = T extends (p: infer P) => any ? P : never
 

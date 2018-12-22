@@ -1,8 +1,12 @@
-import { canvasToTempFilePath, getImageInfo, wait } from './wrap'
+import { wait, wrapped } from './wrap'
+const { canvasToTempFilePath, getImageInfo } = wrapped
 declare const wx: any
 
-type ResolveType<T extends PromiseLike<any>> = T extends PromiseLike<infer R> ? R : never
-type ImageInfo = ResolveType<ReturnType<typeof getImageInfo>>
+interface ImageInfo {
+  width: number
+  height: number
+  path: string
+}
 interface Vector2 {
   x: number
   y: number

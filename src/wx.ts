@@ -12,7 +12,7 @@ export declare namespace wx {
 }
 type P<T, R = void> = (options?: T & wx.Options<R>) => any
 type Q<R = void> = (options?: wx.Options<R>) => any
-export declare interface wx {
+export interface wx {
   [x: string]: wx.Func
   request: P<
     {
