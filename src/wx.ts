@@ -9,6 +9,16 @@ export declare namespace wx {
     complete?(): void
   }
   type Func<T = any> = (options?: T) => any
+  type AuthScope =
+    | 'scope.userInfo'
+    | 'scope.userLocation'
+    | 'scope.address'
+    | 'scope.invoiceTitle'
+    | 'scope.invoice'
+    | 'scope.werun'
+    | 'scope.record'
+    | 'scope.writePhotosAlbum'
+    | 'scope.camera'
 }
 type P<T, R = void> = (options?: T & wx.Options<R>) => any
 type Q<R = void> = (options?: wx.Options<R>) => any
@@ -53,29 +63,13 @@ export interface wx {
       statusCode: number
     }
   >
-  canvasToTempFilePath: P<
-    {
-      x?: number
-      y?: number
-      width?: number
-      height?: number
-      destWidth?: number
-      destHeight?: number
-      canvasId: string
-      fileType?: 'png' | 'jpg'
-      quality?: number
-    },
-    {
-      tempFilePath: string
-    }
-  >
   getSetting: Q<{
-    authSetting: Record<string, boolean>
+    authSetting: Record<wx.AuthScope, boolean>
   }>
   openSetting: Q<{
-    authSetting: Record<string, boolean>
+    authSetting: Record<wx.AuthScope, boolean>
   }>
-  authorize: P<{ scope: string }>
+  authorize: P<{ scope: wx.AuthScope }>
   navigateTo: P<{ url: string }>
   switchTab: P<{ url: string }>
   reLaunch: P<{ url: string }>
@@ -131,14 +125,6 @@ export interface wx {
     address: string
     latitude: number
     longitude: number
-  }>
-  updateShareMenu: P<{
-    withShareTicket?: boolean
-    isUpdatableMessage?: boolean
-    activityId?: string
-    templateInfo?: {
-      parameterList: Array<{ name: string; value: string }>
-    }
   }>
   getFileInfo: P<
     { filePath: string; digestAlgorithm?: 'md5' | 'sha1' },
@@ -247,6 +233,69 @@ export interface wx {
     {
       confirm: boolean
       cancel: boolean
+    }
+  >
+  showActionSheet: P<{ itemList: string[]; itemColor?: string }, { tapIndex: number }>
+  showLoading: P<{ title: string; mask?: boolean }>
+  hideLoading: Q
+  showToast: P<{
+    title: string
+    icon?: 'success' | 'loading' | 'none'
+    image?: string
+    duration?: number
+    mask?: boolean
+  }>
+  hideToast: Q
+  updateShareMenu: P<{
+    withShareTicket?: boolean
+    isUpdatableMessage?: boolean
+    activityId?: string
+    templateInfo?: {
+      parameterList: Array<{ name: string; value: string }>
+    }
+  }>
+  showShareMenu: P<{ withShareTicket?: boolean }>
+  hideShareMenu: Q
+  getShareInfo: P<
+    { shareTicket: string; timeout?: number },
+    { errMsg: string; encryptedData: string; iv: string }
+  >
+  canvasToTempFilePath: P<
+    {
+      x?: number
+      y?: number
+      width?: number
+      height?: number
+      destWidth?: number
+      destHeight?: number
+      canvasId: string
+      fileType?: 'png' | 'jpg'
+      quality?: number
+    },
+    {
+      tempFilePath: string
+    }
+  >
+  canvasPutImageData: P<{
+    canvasId: string
+    data: Uint8ClampedArray
+    x: number
+    y: number
+    width: number
+    height: number
+  }>
+  canvasGetImageData: P<
+    {
+      canvasId: string
+      x: number
+      y: number
+      width: number
+      height: number
+    },
+    {
+      width: number
+      height: number
+      data: Uint8ClampedArray
     }
   >
 }

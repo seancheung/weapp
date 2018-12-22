@@ -1,4 +1,5 @@
 import { wrapped as wx } from './wrap'
+import { wx as w } from './wx'
 
 type Parameter<T extends (p: any) => any> = T extends (p: infer P) => any ? P : never
 
@@ -45,7 +46,7 @@ export function decodeQuery(query: Record<string, string>): Record<string, strin
  *
  * @param scope Scope
  */
-export async function authorize(scope: string): Promise<void> {
+export async function authorize(scope: w.AuthScope): Promise<void> {
   const { authSetting } = await wx.getSetting()
   if (!authSetting[scope]) {
     await wx.authorize({ scope })
