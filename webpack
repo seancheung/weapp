@@ -1,0 +1,34 @@
+#!/usr/bin/env node
+// tslint:disable
+const path = require('path')
+const DtsBundleWebpack = require('dts-bundle-webpack')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
+
+module.exports = {
+  mode: 'production',
+  entry: './src/index.ts',
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        use: 'babel-loader',
+        exclude: /node_modules/
+      }
+    ]
+  },
+  resolve: {
+    extensions: ['.ts']
+  },
+  output: {
+    filename: 'index.js',
+    path: path.resolve(__dirname, 'lib')
+  },
+  plugins: [
+    new DtsBundleWebpack({
+      name: '@schoolpal/wechat',
+      main: 'build/index.d.ts',
+      out: '~/lib/index.d.ts'
+    }),
+    new CopyWebpackPlugin(['LICENSE', '*.md', 'package*.json'])
+  ]
+}
