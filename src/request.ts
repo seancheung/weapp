@@ -1,4 +1,5 @@
 // tslint:disable:no-invalid-this
+import { joinUrl } from './utils'
 import { Omit, wrapped } from './wrap'
 declare const wx: any
 
@@ -103,44 +104,50 @@ interface Wrapped extends Record<Verbs, Func> {
   defaults(options: Defaults): Omit<Wrapped, 'defaults'>
 }
 
-function defaults<T extends Wrapped>(this: T, options: Defaults): T {
-  return Object.assign({}, this, { _defaults: options })
+function defaults<T extends Wrapped>(options?: Defaults): T {
+  const cxt = ['options', 'get', 'head', 'post', 'put', 'delete', 'trace', 'connect'].reduce(
+    (o, k) =>
+      Object.assign(o, {
+        [k](opts: string | Omit<Options, 'method'>) {
+          if (typeof opts === 'string') {
+            opts = { url: opts }
+          }
+          const { _defaults = {} }: { _defaults?: Defaults } = this as any
+          const { baseUrl, dataType, header: h, responseType } = _defaults
+          let { url, header } = opts
+          if (baseUrl) {
+            url = joinUrl(baseUrl, url)
+          }
+          if (h) {
+            header = { ...header, ...h }
+          }
+          return send({
+            dataType,
+            responseType,
+            ...opts,
+            url,
+            header,
+            method: k.toUpperCase() as Options['method']
+          })
+        }
+      }),
+    { _defaults: options, download }
+  )
+  Object.assign(cxt, {
+    download(opts: DownloadOptions) {
+      const { _defaults = {} }: { _defaults?: Defaults } = this as any
+      const { baseUrl, header: h } = _defaults
+      let { url, header } = opts
+      if (baseUrl) {
+        url = joinUrl(baseUrl, url)
+      }
+      if (h) {
+        header = { ...header, ...h }
+      }
+      return download({ ...opts, url, header })
+    }
+  })
+  return Object.assign(send.bind(cxt), cxt)
 }
 
-export const request: Wrapped = [
-  'options',
-  'get',
-  'head',
-  'post',
-  'put',
-  'delete',
-  'trace',
-  'connect'
-].reduce(
-  (o, k) =>
-    Object.assign(o, {
-      [k](opts: string | Omit<Options, 'method'>) {
-        if (typeof opts === 'string') {
-          opts = { url: opts }
-        }
-        const { _defaults = {} }: { _defaults?: Defaults } = this
-        const { baseUrl, dataType, header: h, responseType } = _defaults
-        let { url, header } = opts
-        if (baseUrl) {
-          url = (baseUrl + '/' + url).replace(/\/{2,}/g, '')
-        }
-        if (h) {
-          header = { ...header, ...h }
-        }
-        return send({
-          dataType,
-          responseType,
-          ...opts,
-          url,
-          header,
-          method: k.toUpperCase() as Options['method']
-        })
-      }
-    }),
-  Object.assign({}, send, { defaults, download }) as any
-)
+export const request: Wrapped = Object.assign(defaults(), { defaults })

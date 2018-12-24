@@ -42,6 +42,18 @@ export function decodeQuery(query: Record<string, string>): Record<string, strin
 }
 
 /**
+ * Join urls
+ *
+ * @param urls urls
+ */
+export function joinUrl(...urls: string[]): string {
+  return urls
+    .join('/')
+    .replace(/([^:])\/{2,}/g, '$1/')
+    .replace(/\/$/, '')
+}
+
+/**
  * Check settings and authorize if required
  *
  * @param scope Scope
