@@ -1,8 +1,8 @@
 import { wx } from './wx'
 
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 type SuccessType<T extends wx.Options<any>> = T extends wx.Options<infer R> ? R : never
 type Callback<T extends wx.Options> = (opts?: T) => any
-type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 type Promisifed<T extends wx.Options> = (opts?: Omit<T, wx.Callbacks>) => Promise<SuccessType<T>>
 type Wrapped<T extends Record<string, wx.Func>> = {
   readonly [K in keyof T]: T[K] extends wx.Func<infer P> ? Promisifed<P> : never
