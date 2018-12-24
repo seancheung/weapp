@@ -144,7 +144,8 @@ async function download(this: any, options: DownloadOptions): Promise<DownloadRe
     throw new Error('Not Supported')
   }
   length = parseInt(length, 10)
-  const chunkSize = Math.ceil(length / options.parts)
+  const { parts = 1 } = options
+  const chunkSize = Math.ceil(length / parts)
   const makeTask = async (range: string, opts: DownloadOptions) => {
     const { data } = await send.call(this, {
       url: opts.url,

@@ -136,12 +136,33 @@ export interface Transform {
 }
 export declare namespace Layer {
   interface Base {
+    /**
+     * 图层类型
+     */
     type: string
+    /**
+     * 绘制起点x
+     */
     x?: number
+    /**
+     * 绘制起点y
+     */
     y?: number
+    /**
+     * 填充样式. 为 true 进行默认填充
+     */
     fill?: Fill | true
+    /**
+     * 描边样式. 为 true 进行默认描边
+     */
     stroke?: Stroke | true
+    /**
+     * 图层遮罩
+     */
     clip?: Clip
+    /**
+     * 图层变换
+     */
     transform?: Transform
   }
   interface Rect extends Base {
@@ -187,18 +208,51 @@ export declare namespace Layer {
 }
 export type Layer = Layer.Rect | Layer.Arc | Layer.Image | Layer.Text | Layer.Path
 export interface Style {
+  /**
+   * 描边
+   */
   stroke?: Stroke
+  /**
+   * 填充
+   */
   fill?: Fill
+  /**
+   * 文字
+   */
   font?: Font
 }
 export interface Export {
+  /**
+   * 指定的画布区域的左上角横坐标
+   */
   x?: number
+  /**
+   * 指定的画布区域的左上角纵坐标
+   */
   y?: number
+  /**
+   * 指定的画布区域的宽度
+   */
   width?: number
+  /**
+   * 指定的画布区域的高度
+   */
   height?: number
+  /**
+   * 输出的图片的宽度
+   */
   destWidth?: number
+  /**
+   * 输出的图片的高度
+   */
   destHeight?: number
+  /**
+   * 目标文件的类型
+   */
   fileType?: 'jpg' | 'png'
+  /**
+   * 图片的质量，目前仅对 jpg 有效。取值范围为 (0, 1]，不在范围内时当作 1.0 处理
+   */
   quality?: number
 }
 export type Downloader = (src: string) => Promise<ImageInfo>

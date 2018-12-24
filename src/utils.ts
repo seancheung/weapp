@@ -68,7 +68,7 @@ export async function authorize(scope: wx.AuthScope): Promise<void> {
 
 type getLocation = typeof wrapped.getLocation
 /**
- * 检查并请求地理定位权限
+ * 检查权限并请求地理定位
  *
  * @param opts 定位选项
  */
