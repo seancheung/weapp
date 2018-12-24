@@ -1,8 +1,21 @@
 // tslint:disable:no-invalid-this
-import { Omit, wrapped as wx } from './wrap'
+import { Omit, wrapped } from './wrap'
+declare const wx: any
 
-type Options = Parameters<typeof wx.request>[0]
-type Func = (options: Omit<Options, 'method'>) => ReturnType<typeof wx.request>
+interface Options {
+  url: string
+  data?: string | object | ArrayBuffer
+  header?: Record<string, any>
+  method?: 'OPTIONS' | 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'TRACE' | 'CONNECT'
+  dataType?: string
+  responseType?: 'text' | 'arraybuffer'
+}
+interface Response {
+  data: string | object | ArrayBuffer
+  statusCode: number
+  header: Record<string, any>
+}
+type Func = (options: string | Omit<Options, 'method'>) => Promise<Response>
 type Verbs = 'options' | 'get' | 'head' | 'post' | 'put' | 'delete' | 'trace' | 'connect'
 
 class HttpError extends Error {
@@ -13,8 +26,8 @@ class HttpError extends Error {
   }
 }
 
-async function send(options: Options) {
-  const res = await wx.request(options)
+async function send(options: Options): Promise<Response> {
+  const res = await wrapped.request(options)
   if (res.statusCode >= 400 || res.statusCode < 200) {
     let text: string
     if (typeof res.data === 'string') {
@@ -85,16 +98,16 @@ async function download(options: DownloadOptions): Promise<DownloadResult> {
 type Defaults = Partial<Omit<Options, 'method' | 'url' | 'data'> & { baseUrl: string }>
 
 interface Wrapped extends Record<Verbs, Func> {
-  send: typeof send
+  (options: Options): Promise<Response>
   download: typeof download
   defaults(options: Defaults): Omit<Wrapped, 'defaults'>
 }
 
 function defaults<T extends Wrapped>(this: T, options: Defaults): T {
-  return { ...this, _defaults: options }
+  return Object.assign({}, this, { _defaults: options })
 }
 
-export const wrapped: Wrapped = [
+export const request: Wrapped = [
   'options',
   'get',
   'head',
@@ -106,7 +119,10 @@ export const wrapped: Wrapped = [
 ].reduce(
   (o, k) =>
     Object.assign(o, {
-      [k](opts: Omit<Options, 'method'>) {
+      [k](opts: string | Omit<Options, 'method'>) {
+        if (typeof opts === 'string') {
+          opts = { url: opts }
+        }
         const { _defaults = {} }: { _defaults?: Defaults } = this
         const { baseUrl, dataType, header: h, responseType } = _defaults
         let { url, header } = opts
@@ -126,5 +142,5 @@ export const wrapped: Wrapped = [
         })
       }
     }),
-  { send, defaults, download } as any
+  Object.assign({}, send, { defaults, download }) as any
 )

@@ -1,26 +1,29 @@
-import { wx } from './wx'
+import { wx as types } from './wx'
+declare const wx: any
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
-type SuccessType<T extends wx.Options<any>> = T extends wx.Options<infer R> ? R : never
-type Callback<T extends wx.Options> = (opts?: T) => any
-type Promisifed<T extends wx.Options> = (opts?: Omit<T, wx.Callbacks>) => Promise<SuccessType<T>>
-type Wrapped<T extends Record<string, wx.Func>> = {
-  readonly [K in keyof T]: T[K] extends wx.Func<infer P> ? Promisifed<P> : never
+type SuccessType<T extends types.Options<any>> = T extends types.Options<infer R> ? R : never
+type Callback<T extends types.Options> = (opts?: T) => any
+type Promisifed<T extends types.Options> = (
+  opts?: Omit<T, types.Callbacks>
+) => Promise<SuccessType<T>>
+type Wrapped<T extends Record<string, types.Func>> = {
+  readonly [K in keyof T]: T[K] extends types.Func<infer P> ? Promisifed<P> : never
 }
 /**
  * Promisify a wechat function
  *
  * @param func wx function
  */
-export function promisify<T extends wx.Options>(func: Callback<T>): Promisifed<T> {
-  return (opts?: wx.Options) =>
+export function promisify<T extends types.Options>(func: Callback<T>): Promisifed<T> {
+  return (opts?: types.Options) =>
     opts && (opts.success || opts.fail || opts.complete)
       ? func.call(wx, opts)
       : new Promise((resolve, reject) => {
           func.call(wx, {
             ...opts,
             success: resolve,
-            fail: (res?: wx.FailRes) => {
+            fail: (res?: types.FailRes) => {
               reject(new Error(res && res.errMsg))
             }
           })
@@ -61,7 +64,7 @@ export function wait<R>(func: Function, context?: any): PromiseFunc<R> {
     })
 }
 
-export const wrapped: Wrapped<wx> = Object.keys(wx).reduce((o: any, k) => {
+export const wrapped: Wrapped<types> = Object.keys(wx).reduce((o: any, k) => {
   if (typeof wx[k] === 'function') {
     o[k] = promisify(wx[k])
   }

@@ -1,5 +1,5 @@
-import { wrapped as wx } from './wrap'
-import { wx as w } from './wx'
+import { wrapped } from './wrap'
+import { wx } from './wx'
 
 type Parameter<T extends (p: any) => any> = T extends (p: infer P) => any ? P : never
 
@@ -46,14 +46,14 @@ export function decodeQuery(query: Record<string, string>): Record<string, strin
  *
  * @param scope Scope
  */
-export async function authorize(scope: w.AuthScope): Promise<void> {
-  const { authSetting } = await wx.getSetting()
+export async function authorize(scope: wx.AuthScope): Promise<void> {
+  const { authSetting } = await wrapped.getSetting()
   if (!authSetting[scope]) {
-    await wx.authorize({ scope })
+    await wrapped.authorize({ scope })
   }
 }
 
-type getLocation = typeof wx.getLocation
+type getLocation = typeof wrapped.getLocation
 /**
  * Authorize and get location
  *
@@ -61,5 +61,5 @@ type getLocation = typeof wx.getLocation
  */
 export async function getLocation(opts: Parameter<getLocation>): ReturnType<getLocation> {
   await authorize('scope.userLocation')
-  return wx.getLocation(opts)
+  return wrapped.getLocation(opts)
 }

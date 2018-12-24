@@ -299,4 +299,3 @@ export interface wx {
     }
   >
 }
-export declare const wx: wx
