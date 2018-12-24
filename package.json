@@ -1,17 +1,17 @@
 {
-  "name": "@schoolpal/wechat",
+  "name": "weuse",
   "version": "0.1.0",
   "description": "Wechat miniprogram utilities",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/seancheung/wechat-mp.git"
+    "url": "git+ssh://git@github.com/seancheung/weuse.git"
   },
   "bugs": {
-    "url": "https://github.com/seancheung/wechat-mp/issues"
+    "url": "https://github.com/seancheung/weuse/issues"
   },
-  "homepage": "https://github.com/seancheung/wechat-mp#readme",
+  "homepage": "https://github.com/seancheung/weuse#readme",
   "keywords": [
     "wechat",
     "wx",
