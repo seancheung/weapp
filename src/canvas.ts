@@ -203,9 +203,21 @@ export interface Export {
 }
 export type Downloader = (src: string) => Promise<ImageInfo>
 export interface Options {
+  /**
+   * 图层. 从下到上绘制
+   */
   layers: Layer[]
+  /**
+   * 默认样式. 可以在图层中覆盖
+   */
   default?: Style
-  dump?: Export
+  /**
+   * 导出 canvas 到文件
+   */
+  export?: Export
+  /**
+   * 图片下载方法(不设置则使用 wx.getImageInfo). 相同地址的资源不会重复下载. 支持本地和远端资源
+   */
   downloader?: Downloader
 }
 export async function resolveLayers(layers: Layer[], downloader: Downloader): Promise<Layer[]> {
@@ -524,11 +536,11 @@ export function drawImage(ctx: any, layer: Layer.Image): void {
   ctx.restore()
 }
 /**
- * Draw graphics to canvas
+ * 在 canvas 上绘制图形
  *
  * @param canvasId Canvas ID
- * @param options Canvas options
- * @returns Exported file path
+ * @param options 选项
+ * @returns 导出后的文件路径(需要设置选项中 export 为 true)
  */
 export async function draw(canvasId: string, options: Options): Promise<void | string> {
   const layers = await resolveLayers(
@@ -550,7 +562,7 @@ export async function draw(canvasId: string, options: Options): Promise<void | s
   }
   ctx.save()
   layers.forEach(layer => drawLayer(ctx, layer))
-  const { dump } = options
+  const { export: dump } = options
   await wait(ctx.draw, ctx)(false)
   if (dump) {
     const { tempFilePath } = await canvasToTempFilePath({

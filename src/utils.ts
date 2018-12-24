@@ -4,10 +4,10 @@ import { wx } from './wx'
 type Parameter<T extends (p: any) => any> = T extends (p: infer P) => any ? P : never
 
 /**
- * Encode query string
+ * 从 object 创建 querystring
  *
- * @param query Query object
- * @returns Encoded query string
+ * @param query 要设置的键值对. 值为 null 或 undefined 的对象不会添加到结果中
+ * @returns 生成的 querystring
  */
 export function encodeQuery(query: Record<string, any>): string {
   return Object.entries(query)
@@ -17,10 +17,10 @@ export function encodeQuery(query: Record<string, any>): string {
 }
 
 /**
- * Decod query object
+ * 解析小程序页面传递的 querystring 对象. 兼容小程序码、二维码、普通链接
  *
- * @param query Query object
- * @returns Decoded query object
+ * @param query 从页面 onLoad(options) 中获取的 options
+ * @returns 解析后的对象
  */
 export function decodeQuery(query: Record<string, string>): Record<string, string> {
   let qs
@@ -42,9 +42,10 @@ export function decodeQuery(query: Record<string, string>): Record<string, strin
 }
 
 /**
- * Join urls
+ * 连接 url. 会移除重复的 '/' 符号. url 开头跟结尾均可包含或缺省 '/' 符号
  *
- * @param urls urls
+ * @param urls 要进行连接的url
+ * @returns 连接后的url. 结尾不包含 '/' 符号(除非整体为 '/' )
  */
 export function joinUrl(...urls: string[]): string {
   return urls
@@ -54,9 +55,9 @@ export function joinUrl(...urls: string[]): string {
 }
 
 /**
- * Check settings and authorize if required
+ * 查询授权, 如果未授权则进行请求
  *
- * @param scope Scope
+ * @param scope 权限名
  */
 export async function authorize(scope: wx.AuthScope): Promise<void> {
   const { authSetting } = await wrapped.getSetting()
@@ -67,9 +68,9 @@ export async function authorize(scope: wx.AuthScope): Promise<void> {
 
 type getLocation = typeof wrapped.getLocation
 /**
- * Authorize and get location
+ * 检查并请求地理定位权限
  *
- * @param opts options
+ * @param opts 定位选项
  */
 export async function getLocation(opts: Parameter<getLocation>): ReturnType<getLocation> {
   await authorize('scope.userLocation')

@@ -11,9 +11,9 @@ type Wrapped<T extends Record<string, types.Func>> = {
   readonly [K in keyof T]: T[K] extends types.Func<infer P> ? Promisifed<P> : never
 }
 /**
- * Promisify a wechat function
+ * 将一个小程序方法 Promise 化. 需要该方法中接受 success/fail 回调
  *
- * @param func wx function
+ * @param func 需要处理的小程序方法(wx.funcName)
  */
 export function promisify<T extends types.Options>(func: Callback<T>): Promisifed<T> {
   return (opts?: types.Options) =>
