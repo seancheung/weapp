@@ -28,7 +28,7 @@ export interface wx {
     {
       url: string
       data?: string | object | ArrayBuffer
-      header?: Record<string, string>
+      header?: Record<string, any>
       method?: 'OPTIONS' | 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'TRACE' | 'CONNECT'
       dataType?: string
       responseType?: 'text' | 'arraybuffer'
@@ -36,13 +36,13 @@ export interface wx {
     {
       data: string | object | ArrayBuffer
       statusCode: number
-      header: Record<string, string>
+      header: Record<string, any>
     }
   >
   downloadFile: P<
     {
       url: string
-      header?: Record<string, string>
+      header?: Record<string, any>
       filePath?: string
     },
     {
@@ -55,7 +55,7 @@ export interface wx {
       url: string
       filePath: string
       name: string
-      header?: Record<string, string>
+      header?: Record<string, any>
       formData?: object
     },
     {
