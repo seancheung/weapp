@@ -1,3 +1,4 @@
+// tslint:disable:no-invalid-this
 import { Omit, wrapped as wx } from './wrap'
 
 type Options = Parameters<typeof wx.request>[0]
@@ -27,7 +28,18 @@ async function send(options: Options) {
   }
 }
 
-export const wrapped: Record<Verbs, Func> & { send: typeof send } = [
+type Defaults = Partial<Omit<Options, 'method' | 'url' | 'data'> & { baseUrl: string }>
+
+interface Wrapped extends Record<Verbs, Func> {
+  send: typeof send
+  defaults(options: Defaults): Omit<Wrapped, 'defaults'>
+}
+
+function defaults<T extends Wrapped>(this: T, options: Defaults): T {
+  return { ...this, _defaults: options }
+}
+
+export const wrapped: Wrapped = [
   'options',
   'get',
   'head',
@@ -39,8 +51,25 @@ export const wrapped: Record<Verbs, Func> & { send: typeof send } = [
 ].reduce(
   (o, k) =>
     Object.assign(o, {
-      [k]: (opts: Omit<Options, 'method'>) =>
-        send({ ...opts, method: k.toUpperCase() as Options['method'] })
+      [k](opts: Omit<Options, 'method'>) {
+        const { _defaults = {} }: { _defaults?: Defaults } = this
+        const { baseUrl, dataType, header: h, responseType } = _defaults
+        let { url, header } = opts
+        if (baseUrl) {
+          url = (baseUrl + '/' + url).replace(/\/{2,}/g, '')
+        }
+        if (h) {
+          header = { ...header, ...h }
+        }
+        return send({
+          dataType,
+          responseType,
+          ...opts,
+          url,
+          header,
+          method: k.toUpperCase() as Options['method']
+        })
+      }
     }),
-  { send } as any
+  { send, defaults } as any
 )
