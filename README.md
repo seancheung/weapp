@@ -12,7 +12,7 @@ npm i weuse
 
 使用本地依赖项
 
-下载 [latest release](releases/latest), 放至项目目录中进行相对路径引用
+如无法使用 npm 依赖, 可下载 [latest release](../../releases/latest), 放至项目目录中进行相对路径引用.
 
 ## 使用
 
@@ -46,7 +46,9 @@ const { confirm, cancel } = await weuse.promisify(wx.showModal)({
 
 **weuse.wx**
 
-> 包含全部已`Promisify`处理的 wx 方法对象. 调用前面同 wx 中的方法, 无需设置`success`,`fail`回调. 若设置回调, 则不会返回`Promise`. e.g.
+> 包含全部已`Promisify`处理的 wx 方法对象. 调用签名同 wx 中的方法, 无需设置`success`,`fail`回调. 若设置回调, 则不会返回`Promise`.
+
+e.g.
 
 原调用
 
@@ -222,10 +224,10 @@ const res = await request.get({
 })
 ```
 
-同
+相当于
 
 ```javascript
-const res = await request.get({
+const res = await weuse.request.get({
   url: 'https://myapi.com/api/v1/items',
   header: {
     'x-uuid': '12345',
@@ -254,6 +256,21 @@ Result:
 
 - filePath?: string _下载文件保存路径_
 - buffer?: ArrayBuffer _下载文件的二进制流_
+
+e.g.
+
+```javascript
+const { filePath } = await weuse.request.download({
+  url: 'https://some/large/file.jpg',
+  parts: 3,
+  filePath: wx.env.USER_DATA_PATH + '/file.jpg'
+})
+
+const { buffer } = await weuse.request.download({
+  url: 'https://some/large/file.jpg',
+  parts: 3
+})
+```
 
 ### Canvas
 
@@ -452,6 +469,7 @@ const filePath = await weuse.canvas.draw('poster', {
       x: 100,
       y: 300,
       clip: {
+        // 圆角遮罩效果
         type: 'rect',
         x: 100,
         y: 300,
@@ -466,6 +484,7 @@ const filePath = await weuse.canvas.draw('poster', {
       x: 100,
       y: 400,
       clip: {
+        // 圆形遮罩效果
         type: 'circular',
         x: 150,
         y: 450,
