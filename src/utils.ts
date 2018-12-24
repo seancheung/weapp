@@ -1,0 +1,78 @@
+import { wrapped } from './wrap'
+import { wx } from './wx'
+
+type Parameter<T extends (p: any) => any> = T extends (p: infer P) => any ? P : never
+
+/**
+ * 从 object 创建 querystring
+ *
+ * @param query 要设置的键值对. 值为 null 或 undefined 的对象不会添加到结果中
+ * @returns 生成的 querystring
+ */
+export function encodeQuery(query: Record<string, any>): string {
+  return Object.entries(query)
+    .filter(([, v]) => v != null)
+    .map(([k, v]) => `${k}=${v}`)
+    .join('&')
+}
+
+/**
+ * 解析小程序页面传递的 querystring 对象. 兼容小程序码、二维码、普通链接
+ *
+ * @param query 从页面 onLoad(options) 中获取的 options
+ * @returns 解析后的对象
+ */
+export function decodeQuery(query: Record<string, string>): Record<string, string> {
+  let qs
+  if (query.scene) {
+    qs = decodeURIComponent(query.scene)
+  } else if (query.q) {
+    const url = decodeURIComponent(query.q)
+    const [, arg] = url.split('?')
+    qs = arg
+  } else {
+    return query
+  }
+  return qs
+    ? qs
+        .split('&')
+        .map(i => i.split('='))
+        .reduce((o, [k, v]) => Object.assign(o, { [k]: v }), {})
+    : {}
+}
+
+/**
+ * 连接 url. 会移除重复的 '/' 符号. url 开头跟结尾均可包含或缺省 '/' 符号
+ *
+ * @param urls 要进行连接的url
+ * @returns 连接后的url. 结尾不包含 '/' 符号(除非整体为 '/' )
+ */
+export function joinUrl(...urls: string[]): string {
+  return urls
+    .join('/')
+    .replace(/([^:])\/{2,}/g, '$1/')
+    .replace(/\/$/, '')
+}
+
+/**
+ * 查询授权, 如果未授权则进行请求
+ *
+ * @param scope 权限名
+ */
+export async function authorize(scope: wx.AuthScope): Promise<void> {
+  const { authSetting } = await wrapped.getSetting()
+  if (!authSetting[scope]) {
+    await wrapped.authorize({ scope })
+  }
+}
+
+type getLocation = typeof wrapped.getLocation
+/**
+ * 检查权限并请求地理定位
+ *
+ * @param opts 定位选项
+ */
+export async function getLocation(opts: Parameter<getLocation>): ReturnType<getLocation> {
+  await authorize('scope.userLocation')
+  return wrapped.getLocation(opts)
+}

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "outDir": "lib",
+    "sourceMap": false,
+    "declaration": true,
+    "experimentalDecorators": true
+  },
+  "include": ["src/**/*"]
+}

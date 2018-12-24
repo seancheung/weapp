@@ -1,0 +1,35 @@
+{
+  "extends": ["tslint:recommended", "tslint-config-prettier"],
+  "defaultSeverity": "error",
+  "linterOptions": {
+    "exclude": ["node_modules/**/*", "lib/**/*"]
+  },
+  "rules": {
+    "semicolon": [true, "never"],
+    "quotemark": [true, "single"],
+    "no-default-export": false,
+    "indent": [true, "spaces", 2],
+    "no-invalid-this": true,
+    "no-return-await": true,
+    "promise-function-async": false,
+    "max-classes-per-file": false,
+    "member-access": false,
+    "object-literal-sort-keys": false,
+    "interface-name": false,
+    "unified-signatures": false,
+    "forin": false,
+    "variable-name": [true, "ban-keywords"],
+    "one-variable-per-declaration": false,
+    "file-name-casing": [true, "camel-case"],
+    "no-namespace": false,
+    "ban-types": false,
+    "class-name": false,
+    "trailing-comma": [
+      true,
+      {
+        "multiline": "never",
+        "singleline": "never"
+      }
+    ]
+  }
+}

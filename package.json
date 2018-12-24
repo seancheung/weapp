@@ -1,0 +1,45 @@
+{
+  "name": "weuse",
+  "version": "0.1.0",
+  "description": "Wechat miniprogram utilities",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/seancheung/weuse.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seancheung/weuse/issues"
+  },
+  "homepage": "https://github.com/seancheung/weuse#readme",
+  "keywords": [
+    "wechat",
+    "wx",
+    "miniprogram",
+    "mpvue"
+  ],
+  "author": "Sean Cheung",
+  "license": "MIT",
+  "scripts": {
+    "format": "prettier --write \"{src}/**/*.{ts,js,json}\"",
+    "lint": "tslint 'src/**/*.ts'",
+    "prebuild": "del-cli lib && tsc --emitDeclarationOnly",
+    "build": "webpack --config webpack"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "@babel/preset-typescript": "^7.1.0",
+    "babel-loader": "^8.0.4",
+    "babel-plugin-transform-async-to-promises": "^0.8.4",
+    "copy-webpack-plugin": "^4.6.0",
+    "del-cli": "^1.1.0",
+    "prettier": "^1.15.2",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "typescript": "^3.1.3",
+    "webpack": "^4.28.2",
+    "webpack-cli": "^3.1.2"
+  },
+  "dependencies": {}
+}
