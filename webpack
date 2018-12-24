@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 // tslint:disable
 const path = require('path')
-const DtsBundleWebpack = require('dts-bundle-webpack')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = {
@@ -23,12 +22,5 @@ module.exports = {
     filename: 'index.js',
     path: path.resolve(__dirname, 'lib')
   },
-  plugins: [
-    new DtsBundleWebpack({
-      name: '@schoolpal/wechat',
-      main: 'build/index.d.ts',
-      out: '~/lib/index.d.ts'
-    }),
-    new CopyWebpackPlugin(['LICENSE', '*.md', 'package*.json'])
-  ]
+  plugins: [new CopyWebpackPlugin(['LICENSE', '*.md', 'package*.json'])]
 }

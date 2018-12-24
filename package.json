@@ -23,9 +23,8 @@
   "scripts": {
     "format": "prettier --write \"{src}/**/*.{ts,js,json}\"",
     "lint": "tslint 'src/**/*.ts'",
-    "prebuild": "del-cli lib build && tsc --emitDeclarationOnly",
-    "build": "webpack --config webpack",
-    "postbuild": "del-cli build"
+    "prebuild": "del-cli lib && tsc --emitDeclarationOnly",
+    "build": "webpack --config webpack"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
@@ -35,7 +34,6 @@
     "babel-plugin-transform-async-to-promises": "^0.8.4",
     "copy-webpack-plugin": "^4.6.0",
     "del-cli": "^1.1.0",
-    "dts-bundle-webpack": "^1.0.2",
     "prettier": "^1.15.2",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.15.0",

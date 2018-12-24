@@ -9,7 +9,7 @@
     "alwaysStrict": true,
     "target": "es2017",
     "module": "commonjs",
-    "outDir": "build",
+    "outDir": "lib",
     "sourceMap": false,
     "declaration": true,
     "removeComments": true,
