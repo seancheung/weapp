@@ -3,6 +3,8 @@ import { wx } from './wx'
 
 type Parameter<T extends (p: any) => any> = T extends (p: infer P) => any ? P : never
 
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+
 /**
  * 从 object 创建 querystring
  *

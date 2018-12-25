@@ -2,6 +2,13 @@
 
 微信小程序 API 助手
 
+### Features
+
+- [Promise 封装](#promise)
+- [缓存时效实现](#缓存)
+- [HTTP 请求封装](#网络请求)
+- [Canvas 封装](#canvas)
+
 ## 安装
 
 使用 npm 依赖(原生或 mpvue)
@@ -30,7 +37,11 @@ import * as weuse from 'weuse'
 
 ### Promise
 
-**weuse.promisify(func: Function): Function**
+**weuse.promise**
+
+> Promise 相关封装
+
+**weuse.promise.promisify(func: Function): Function**
 
 将一个小程序方法 Promise 化
 
@@ -42,6 +53,31 @@ const { confirm, cancel } = await weuse.promisify(wx.showModal)({
   title: 'Test',
   content: 'This is a test'
 })
+```
+
+**weuse.promise.map(values: any[], mapper: Function): Promise&lt;any[]&gt;**
+
+对一个数组进行 map 操作并行执行每个返回的 Promise. 返回按传入顺序排序的执行结果
+
+e.g.
+
+```javascript
+const urls = ['https://...', 'https://...', 'https://...']
+const results = await weuse.promise.map(urls, url => weuse.request.get(url))
+```
+
+**weuse.promise.serial(values: any[]): Promise&lt;any[]&gt;**
+
+顺序执行 Promise. 返回按传入顺序排序的执行结果
+
+e.g.
+
+```javascript
+const results = await weuse.promise.serial([
+  weuse.wx.login(),
+  weuse.request.post({ url, data }),
+  weuse.wx.setStorage({ key, data })
+])
 ```
 
 **weuse.wx**
@@ -106,9 +142,17 @@ weuse.wx.showModal({
 
 > 支持 TTL 的缓存封装
 
+**注意 get/del/touch/exists/ttl/expire/persist/flush 只能针对由 set 添加的缓存**
+
 **weuse.storage.get(key: string): Promise&lt;any&gt;**
 
-从本地缓存中获取指定 key 的内容
+从本地缓存中获取指定 key 的内容. `Date` 类型会被反序列化. key 不存在返回 `undefined`
+
+e.g.
+
+```javascript
+const token = await weuse.storage.get('token')
+```
 
 **weuse.storage.set(opts: Options): Promise&lt;void&gt;**
 
@@ -120,25 +164,79 @@ Options:
 - data: any _需要存储的内容_
 - ttl?: number _有效时间(秒). 为空或 0 则不会过期_
 
+e.g.
+
+```javascript
+await weuse.storage.set({ key: 'token', data: token, ttl: 3600 })
+```
+
 **weuse.storage.del(key: string): Promise&lt;void&gt;**
 
 从本地缓存中移除指定 key
+
+e.g.
+
+```javascript
+await weuse.storage.del('token')
+```
+
+**weuse.storage.touch(...keys: string[]): Promise&lt;number&gt;**
+
+检查指定的 key 是否已过期, 是则移除. key 不存在则忽略. 返回移除掉的 key 数量
+
+e.g.
+
+```javascript
+const count = await weuse.storage.touch('token', 'name', 'key2')
+```
+
+**weuse.storage.exists(key: string): Promise&lt;boolean&gt;**
+
+检查 key 是否存在
+
+e.g.
+
+```javascript
+const exists = await weuse.storage.exists('token')
+```
+
+**weuse.storage.ttl(key: string): Promise&lt;number&gt;**
+
+获取指定 key 的剩余有效时间(秒). 若 key 不存在返回-1; 若 key 不会过期返回-2
+
+e.g.
+
+```javascript
+const ttl = await weuse.storage.ttl('token')
+```
+
+**weuse.storage.expire(key: string, ttl: number): Promise&lt;boolean&gt;**
+
+更新指定 key 的有效时间. key 存在且设置成功则返回 true
+
+e.g.
+
+```javascript
+const success = await weuse.storage.expire('token', 3600)
+```
+
+**weuse.storage.persist(key: string): Promise&lt;boolean&gt;**
+
+移除指定 key 的有效时间让其不会过期. key 存在且设置成功则返回 true
+
+e.g.
+
+```javascript
+const success = await weuse.storage.persist('token')
+```
 
 **weuse.storage.flush()**
 
 移除所有已过期的缓存
 
-**注意 get/del/flush 只能针对由 set 添加的缓存**
-
 e.g.
 
 ```javascript
-await weuse.storage.set({ key: 'token', data: token, ttl: 3600 })
-
-const token = await weuse.storage.get('token')
-
-await weuse.storage.del('token')
-
 await weuse.storage.flush()
 ```
 
@@ -378,8 +476,10 @@ e.g.
 ```javascript
 const filePath = await weuse.canvas.draw('poster', {
   export: {
-    width: 750,
-    height: 1334
+    width: 375,
+    height: 500,
+    fileType: 'jpg',
+    quality: 0.8
   },
   default: {
     stroke: {
@@ -497,7 +597,7 @@ const filePath = await weuse.canvas.draw('poster', {
 
 效果如图:
 
-![Imgur](https://i.imgur.com/6HXnEok.png)
+![Imgur](https://i.imgur.com/3DqAgkL.jpg)
 
 ### 其他
 
@@ -524,6 +624,18 @@ const filePath = await weuse.canvas.draw('poster', {
 **weuse.utils.getLocation(opts: Options): Promise&lt;Location&gt;**
 
 检查权限并请求地理定位
+
+## 构建
+
+```bash
+npm run build
+```
+
+包含 source map
+
+```bash
+SOURCE_MAP=inline-source-map npm run build
+```
 
 ## License
 

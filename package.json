@@ -1,6 +1,6 @@
 {
   "name": "weuse",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Wechat miniprogram utilities",
   "main": "index.js",
   "types": "index.d.ts",
@@ -16,12 +16,14 @@
     "wechat",
     "wx",
     "miniprogram",
-    "mpvue"
+    "mpvue",
+    "微信",
+    "小程序"
   ],
   "author": "Sean Cheung",
   "license": "MIT",
   "scripts": {
-    "format": "prettier --write \"{src}/**/*.{ts,js,json}\"",
+    "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint 'src/**/*.ts'",
     "prebuild": "del-cli lib && tsc --emitDeclarationOnly",
     "build": "webpack --config webpack"

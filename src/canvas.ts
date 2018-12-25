@@ -1,4 +1,4 @@
-import { wait, wrapped } from './wrap'
+import { wrapped } from './wrap'
 const { canvasToTempFilePath, getImageInfo } = wrapped
 declare const wx: any
 
@@ -617,7 +617,7 @@ export async function draw(canvasId: string, options: Options): Promise<void | s
   ctx.save()
   layers.forEach(layer => drawLayer(ctx, layer))
   const { export: dump } = options
-  await wait(ctx.draw, ctx)(false)
+  await new Promise(resolve => ctx.draw(false, resolve))
   if (dump) {
     const { tempFilePath } = await canvasToTempFilePath({
       canvasId,

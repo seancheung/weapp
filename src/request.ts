@@ -1,6 +1,7 @@
 // tslint:disable:no-invalid-this
 import { encodeQuery, joinUrl } from './utils'
-import { Omit, wrapped } from './wrap'
+import { Omit } from './utils'
+import { wrapped } from './wrap'
 declare const wx: any
 
 interface Options {
