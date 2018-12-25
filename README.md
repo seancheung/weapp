@@ -1,4 +1,4 @@
-# weuse
+# WeUse
 
 微信小程序 API 助手
 
@@ -473,6 +473,12 @@ Layer.Path: _路径_
 
 e.g.
 
+```xml
+<view style='width:0px;height:0px;overflow:hidden;'>
+  <canvas canvas-id='poster' style="width:750px;height:750px;"></canvas>
+</view>
+```
+
 ```javascript
 const filePath = await weuse.canvas.draw('poster', {
   export: {
@@ -593,6 +599,7 @@ const filePath = await weuse.canvas.draw('poster', {
     }
   ]
 })
+await weuse.utils.saveImageToPhotosAlbum({ filePath })
 ```
 
 效果如图:
@@ -609,13 +616,32 @@ const filePath = await weuse.canvas.draw('poster', {
 
 从 `object` 创建 querystring
 
+e.g.
+
+```javascript
+const query = weuse.utils.encodeQuery({
+  name: 'admin',
+  size: 50,
+  key: null,
+  index: undefined
+})
+// 结果: name=admin&size=50
+```
+
 **weuse.utils.decodeQuery(query: object): object**
 
 解析小程序页面传递的 querystring 对象. 兼容小程序码、二维码、普通链接
 
 **weuse.utils.joinUrl(...urls: string[]): string**
 
-连接 url. 会移除重复的 `/` 符号. url 开头跟结尾均可包含或缺省 `/` 符号
+连接 url. 会移除重复的 `/` 符号. url 开头跟结尾均可包含或缺省 `/` 符号. 返回结果结尾不含 `/` (除非整体仅为 `/`)
+
+e.g.
+
+```javascript
+const url = weuse.utils.joinUrl('http://myapi.com/', '/api/v1', 'items/', '1')
+// 结果: http://myapi.com/api/v1/items/1
+```
 
 **weuse.utils.authorize(scope: string): Promise&lt;void&gt;**
 
@@ -623,7 +649,15 @@ const filePath = await weuse.canvas.draw('poster', {
 
 **weuse.utils.getLocation(opts: Options): Promise&lt;Location&gt;**
 
+检查权限并获取地理定位
+
+**weuse.utils.chooseLocation(opts: Options): Promise&lt;Location&gt;**
+
 检查权限并请求地理定位
+
+**weuse.utils.saveImageToPhotosAlbum(opts: Options): Promise&lt;void&gt;**
+
+检查权限并写入相册
 
 ## 构建
 
