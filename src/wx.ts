@@ -1,5 +1,7 @@
 export declare namespace wx {
   type Callbacks = 'success' | 'fail' | 'complete'
+  type Callback<T extends Options> = (opts?: T) => any
+  type SuccessType<T extends Options<any>> = T extends Options<infer R> ? R : never
   interface FailRes {
     errMsg: string
   }

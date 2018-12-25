@@ -3,6 +3,8 @@ import { wx } from './wx'
 
 type Parameter<T extends (p: any) => any> = T extends (p: infer P) => any ? P : never
 
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+
 /**
  * 从 object 创建 querystring
  *
@@ -68,11 +70,35 @@ export async function authorize(scope: wx.AuthScope): Promise<void> {
 
 type getLocation = typeof wrapped.getLocation
 /**
- * 检查权限并请求地理定位
+ * 检查权限并获取地理定位
  *
  * @param opts 定位选项
  */
 export async function getLocation(opts: Parameter<getLocation>): ReturnType<getLocation> {
   await authorize('scope.userLocation')
   return wrapped.getLocation(opts)
+}
+
+type chooseLocation = typeof wrapped.chooseLocation
+/**
+ * 检查权限并请求地理定位
+ *
+ * @param opts 定位选项
+ */
+export async function chooseLocation(opts: Parameter<chooseLocation>): ReturnType<chooseLocation> {
+  await authorize('scope.userLocation')
+  return wrapped.chooseLocation(opts)
+}
+
+type saveImageToPhotosAlbum = typeof wrapped.saveImageToPhotosAlbum
+/**
+ * 检查权限并写入相册
+ *
+ * @param opts 写入选项
+ */
+export async function saveImageToPhotosAlbum(
+  opts: Parameter<saveImageToPhotosAlbum>
+): ReturnType<saveImageToPhotosAlbum> {
+  await authorize('scope.writePhotosAlbum')
+  return wrapped.saveImageToPhotosAlbum(opts)
 }
