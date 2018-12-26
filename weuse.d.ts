@@ -915,6 +915,65 @@ declare namespace weuse {
     type Wrapped<T extends Record<string, Func>> = {
       readonly [K in keyof T]: T[K] extends Func<infer P> ? promise.Promisifed<P> : never
     }
+    namespace Page {
+      interface ShareAppMessageOption {
+        from: 'button' | 'menu' | string
+        target: any
+        webViewUrl?: string
+      }
+      interface CustomShareContent {
+        title?: string
+        path?: string
+        imageUrl?: string
+      }
+      interface TabItemTapOption {
+        index: string
+        pagePath: string
+        text: string
+      }
+      interface PageScrollOption {
+        scrollTop: number
+      }
+    }
+    type Page<T extends object = any> = Partial<{
+      data: T
+      route: string
+      setData<K extends keyof T>(data: T | Pick<T, K> | object, callback?: () => void): void
+      onload(query?: Record<string, string>): void
+      onShow(): void
+      onReady(): void
+      onHide(): void
+      onUnload(): void
+      onPullDownRefresh(): void
+      onReachBottom(): void
+      onShareAppMessage(options?: Page.ShareAppMessageOption): Page.CustomShareContent
+      onPageScroll(options?: Page.PageScrollOption): void
+      onTabItemTap(options?: Page.TabItemTapOption): void
+    }>
+    namespace App {
+      interface LaunchShowOption {
+        path: string
+        query: object
+        scene: number
+        shareTicket: string
+        referrerInfo?: object
+      }
+      interface PageNotFoundOption {
+        path: string
+        query: object
+        isEntryPage: boolean
+      }
+      interface GetAppOptions {
+        allowDefault: boolean
+      }
+    }
+    type App = Partial<{
+      onLaunch(options?: App.LaunchShowOption): void
+      onShow(options?: App.LaunchShowOption): void
+      onHide(): void
+      onError(error?: string): void
+      onPageNotFound(options?: App.PageNotFoundOption): void
+    }>
   }
   namespace utils {
     type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
@@ -969,6 +1028,79 @@ declare namespace weuse {
     function saveImageToPhotosAlbum(
       opts: Parameter<saveImageToPhotosAlbum>
     ): ReturnType<saveImageToPhotosAlbum>
+  }
+  namespace store {
+    interface Action {
+      type: string
+      [x: string]: any
+    }
+    type Reducer<T extends object> = (state: T, action: Action) => T
+    type Dispatch = (data: Action) => void
+    type Actor = (...args: any[]) => Promise<void>
+    interface Director<T extends Record<string, Actor>> {
+      $director: T
+    }
+    /**
+     * 合并多个 Reducers
+     *
+     * @param reducers 要进行合并的 Reducer
+     * @returns 合并后的 Reducer
+     */
+    function combineReducers<T extends object>(reducers: Record<string, Reducer<any>>): Reducer<T>
+    interface Store<T extends object> {
+      state: T
+      reducer: Reducer<T>
+      dispatch(data: Action): void
+      setState(state: Partial<T>): void
+    }
+    /**
+     * 创建一个 Store
+     * @param reducer 关联的 Reducer
+     */
+    function createStore<T extends object>(reducer: Reducer<T>): Store<T>
+    /**
+     * 创建一个关联指定 Store 的 App. 用法同 App(). 只能调用一次
+     *
+     * @param options App 参数
+     * @param store 关联的 Store
+     */
+    function provider<T extends object, TState extends object>(
+      options: wx.App & T,
+      store: Store<TState>
+    ): void
+    /**
+     * 创建一个关联 Provider 的 Page. 用法同 Page()
+     *
+     * @param options Page 参数
+     */
+    function connect<T extends wx.Page, TData extends object>(options: wx.Page<TData> & T): void
+    /**
+     * 创建一个关联 Provider 的 Page. 用法同 Page()
+     *
+     * @param options Page 参数
+     * @param stateMapper 状态订阅映射
+     */
+    function connect<T extends wx.Page, TData extends object, TState extends object>(
+      options: wx.Page<TData & TState> & T,
+      stateMapper: (state: object) => TState
+    ): void
+    /**
+     * 创建一个关联 Provider 的 Page. 用法同 Page()
+     *
+     * @param options Page 参数
+     * @param stateMapper 状态订阅映射
+     * @param directorMapper Director 映射
+     */
+    function connect<
+      T extends wx.Page,
+      TData extends object,
+      TState extends object,
+      TDirector extends Record<string, Actor>
+    >(
+      options: wx.Page<TData & TState> & T & Director<TDirector>,
+      stateMapper: (state: object) => TState,
+      directorMapper: (dispatch: Dispatch) => TDirector
+    ): void
   }
   const request: request
   const wx: wx.Wrapped<wx.internal>
