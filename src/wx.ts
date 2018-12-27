@@ -21,6 +21,72 @@ export declare namespace wx {
     | 'scope.record'
     | 'scope.writePhotosAlbum'
     | 'scope.camera'
+  namespace Page {
+    interface ShareAppMessageOption {
+      from: 'button' | 'menu' | string
+      target: any
+      webViewUrl?: string
+    }
+    interface CustomShareContent {
+      title?: string
+      path?: string
+      imageUrl?: string
+    }
+    interface TabItemTapOption {
+      index: string
+      pagePath: string
+      text: string
+    }
+    interface PageScrollOption {
+      scrollTop: number
+    }
+  }
+
+  type Page<T extends Record<string, any> = any> = Partial<{
+    data: T
+    route: string
+
+    setData<K extends keyof T>(
+      data: T | Pick<T, K> | Record<string, any>,
+      callback?: () => void
+    ): void
+    onLoad(query?: Record<string, string>): void
+    onShow(): void
+    onReady(): void
+    onHide(): void
+    onUnload(): void
+    onPullDownRefresh(): void
+    onReachBottom(): void
+    onShareAppMessage(options?: Page.ShareAppMessageOption): Page.CustomShareContent
+    onPageScroll(options?: Page.PageScrollOption): void
+    onTabItemTap(options?: Page.TabItemTapOption): void
+  }>
+
+  namespace App {
+    interface LaunchShowOption {
+      path: string
+      query: Record<string, any>
+      scene: number
+      shareTicket: string
+      referrerInfo?: Record<string, any>
+    }
+    interface PageNotFoundOption {
+      path: string
+      query: Record<string, any>
+      isEntryPage: boolean
+    }
+    interface GetAppOptions {
+      allowDefault: boolean
+    }
+  }
+
+  type App = Partial<{
+    onLaunch(options?: App.LaunchShowOption): void
+    onShow(options?: App.LaunchShowOption): void
+    onHide(): void
+    onError(error?: string): void
+    onPageNotFound(options?: App.PageNotFoundOption): void
+  }>
 }
 type P<T, R = void> = (options?: T & wx.Options<R>) => any
 type Q<R = void> = (options?: wx.Options<R>) => any
