@@ -69,6 +69,7 @@ export function combineReducers<T extends Record<string, any>>(
  * 创建一个 Director
  *
  * @param actors 要转换的 Actors
+ * @returns Director
  */
 export function createDirector<T extends Record<string, Actor>>(actors?: T): Director<T> {
   return (dispatch: Dispatch) =>
@@ -80,7 +81,9 @@ export function createDirector<T extends Record<string, Actor>>(actors?: T): Dir
 
 /**
  * 创建一个 Store
+ *
  * @param reducer 关联的 Reducer
+ * @returns Store
  */
 export function createStore<T extends Record<string, any>>(reducer: Reducer<T>): Store<T> {
   return {
@@ -98,91 +101,101 @@ export function createStore<T extends Record<string, any>>(reducer: Reducer<T>):
 }
 
 /**
- * 创建一个关联指定 Store 的 App. 用法同 App(). 只能调用一次
+ * 创建一个关联指定 Store 的 App.
  *
  * @param store 关联的 Store
- * @param options App 参数
+ * @returns App 构造器
  */
-export function provider<
-  TState extends Record<string, any>,
-  TApp extends wx.App & Record<string, any>
->(store: Store<TState>, options: wx.App & TApp): void {
-  const { onLaunch } = options || ({} as any)
-  App({
-    ...options,
-    store,
-    onLaunch(opts?: wx.App.LaunchShowOption): void {
-      this.store.dispatch({ type: '::init' })
-      if (onLaunch) {
-        onLaunch.call(this, opts)
+export function provider<TState extends Record<string, any>>(
+  store: Store<TState>
+): <TApp extends wx.App & Record<string, any>>(options: wx.App & TApp) => void {
+  return <TApp extends wx.App & Record<string, any>>(options: wx.App & TApp): void => {
+    const { onLaunch } = options || ({} as any)
+    App({
+      ...options,
+      store,
+      onLaunch(opts?: any): void {
+        this.store.dispatch({ type: '::init' })
+        if (onLaunch) {
+          onLaunch.call(this, opts)
+        }
       }
-    }
-  })
+    })
+  }
 }
 
 /**
- * 创建一个关联 Provider 的 Page
+ * 创建一个关联默认 Provider 的 Page
+ *
  * @returns Page 构造器
- * @param options Page 参数
  */
-export function connect<
-  TData extends Record<string, any>,
-  TPage extends wx.Page & Record<string, any>
->(options: wx.Page<TData> & TPage): void
-/**
- * 创建一个关联 Provider 的 Page
- *
- * @param stateMapper 状态订阅映射
- * @param options Page 参数
- */
-export function connect<
-  TState extends Record<string, any>,
-  TData extends Record<string, any>,
-  TPage extends wx.Page & Record<string, any>
->(stateMapper: StateMapper<TState>, options: wx.Page<TData & Partial<TState>> & TPage): void
-/**
- * 创建一个关联 Provider 的 Page
- *
- * @param stateMapper 状态订阅映射
- * @param director Director 映射
- * @param options Page 参数
- */
-export function connect<
-  TState extends Record<string, any>,
-  TDirector extends Record<string, Actor>,
+export function connect(): <
   TData extends Record<string, any>,
   TPage extends wx.Page & Record<string, any>
 >(
+  options: wx.Page<TData> & TPage
+) => void
+/**
+ * 创建一个关联默认 Provider 的 Page
+ *
+ * @param stateMapper 状态订阅映射
+ * @returns Page 构造器
+ */
+export function connect<TState extends Record<string, any>>(
+  stateMapper: StateMapper<TState>
+): <TData extends Record<string, any>, TPage extends wx.Page & Record<string, any>>(
+  options: wx.Page<TData & Partial<TState>> & TPage
+) => void
+/**
+ * 创建一个关联默认 Provider 的 Page
+ *
+ * @param stateMapper 状态订阅映射
+ * @param director Director 映射
+ * @returns Page 构造器
+ */
+export function connect<
+  TState extends Record<string, any>,
+  TDirector extends Record<string, Actor>
+>(
   stateMapper: StateMapper<TState>,
-  director: Director<TDirector>,
+  director: Director<TDirector>
+): <TData extends Record<string, any>, TPage extends wx.Page & Record<string, any>>(
   options: wx.Page<TData & Partial<TState>> & TPage & MappedDirector<TDirector>
-): void
+) => void
 
-export function connect(
-  stateMapper?: StateMapper<any>,
-  director?: Director<any>,
-  options?: any
-): void {
-  if (stateMapper) {
-    const { onLoad } = options || ({} as any)
-    options = {
-      ...options,
-      $sync(state: any): void {
-        this.setData(fix(stateMapper(state)))
-      },
-      onLoad(query?: any): void {
-        const app = getApp<{ store: Store<any> }>()
-        if (isConnected(this)) {
+export function connect(stateMapper?: StateMapper<any>, director?: Director<any>): any {
+  return <TData extends Record<string, any>, TPage extends wx.Page & Record<string, any>>(
+    options: wx.Page<TData> & TPage
+  ): void => {
+    if (stateMapper) {
+      const { onLoad } = options || ({} as any)
+      options = {
+        ...options,
+        $sync(state: any): void {
+          this.setData(fix(stateMapper(state)))
+        },
+        onLoad(query?: any): void {
+          const app = getApp<{ store: Store<any> }>()
           this.$sync(app.store.state)
-        }
-        if (director) {
-          Object.assign(this, director(app.store.dispatch.bind(app.store)))
-        }
-        if (onLoad) {
-          return onLoad.call(this, query)
+          if (onLoad) {
+            return onLoad.call(this, query)
+          }
         }
       }
     }
+    if (director) {
+      const { onLoad } = options || ({} as any)
+      options = {
+        ...options,
+        onLoad(query?: any): void {
+          const app = getApp<{ store: Store<any> }>()
+          Object.assign(this, director(app.store.dispatch.bind(app.store)))
+          if (onLoad) {
+            return onLoad.call(this, query)
+          }
+        }
+      }
+    }
+    Page(options)
   }
-  Page(options)
 }

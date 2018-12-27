@@ -1064,60 +1064,60 @@ declare namespace weuse {
      * 创建一个 Director
      *
      * @param actors 要转换的 Actors
+     * @returns Director
      */
     function createDirector<T extends Record<string, Actor>>(actors?: T): Director<T>
     /**
      * 创建一个 Store
+     *
      * @param reducer 关联的 Reducer
+     * @returns Store
      */
     function createStore<T extends Record<string, any>>(reducer: Reducer<T>): Store<T>
     /**
-     * 创建一个关联指定 Store 的 App. 用法同 App(). 只能调用一次
+     * 创建一个关联指定 Store 的 App.
      *
      * @param store 关联的 Store
-     * @param options App 参数
+     * @returns App 构造器
      */
-    function provider<
-      TState extends Record<string, any>,
-      TApp extends wx.App & Record<string, any>
-    >(store: Store<TState>, options: wx.App & TApp): void
+    function provider<TState extends Record<string, any>>(
+      store: Store<TState>
+    ): <TApp extends wx.App & Record<string, any>>(options: wx.App & TApp) => void
     /**
-     * 创建一个关联 Provider 的 Page
+     * 创建一个关联默认 Provider 的 Page
+     *
      * @returns Page 构造器
-     * @param options Page 参数
      */
-    function connect<
-      TData extends Record<string, any>,
-      TPage extends wx.Page & Record<string, any>
-    >(options: wx.Page<TData> & TPage): void
-    /**
-     * 创建一个关联 Provider 的 Page
-     *
-     * @param stateMapper 状态订阅映射
-     * @param options Page 参数
-     */
-    function connect<
-      TState extends Record<string, any>,
-      TData extends Record<string, any>,
-      TPage extends wx.Page & Record<string, any>
-    >(stateMapper: StateMapper<TState>, options: wx.Page<TData & Partial<TState>> & TPage): void
-    /**
-     * 创建一个关联 Provider 的 Page
-     *
-     * @param stateMapper 状态订阅映射
-     * @param director Director 映射
-     * @param options Page 参数
-     */
-    function connect<
-      TState extends Record<string, any>,
-      TDirector extends Record<string, Actor>,
+    function connect(): <
       TData extends Record<string, any>,
       TPage extends wx.Page & Record<string, any>
     >(
+      options: wx.Page<TData> & TPage
+    ) => void
+    /**
+     * 创建一个关联默认 Provider 的 Page
+     *
+     * @param stateMapper 状态订阅映射
+     * @returns Page 构造器
+     */
+    function connect<TState extends Record<string, any>>(
+      stateMapper: StateMapper<TState>
+    ): <TData extends Record<string, any>, TPage extends wx.Page & Record<string, any>>(
+      options: wx.Page<TData & Partial<TState>> & TPage
+    ) => void
+    /**
+     * 创建一个关联默认 Provider 的 Page
+     *
+     * @param stateMapper 状态订阅映射
+     * @param director Director 映射
+     * @returns Page 构造器
+     */
+    function connect<TState extends Record<string, any>, TDirector extends Record<string, Actor>>(
       stateMapper: StateMapper<TState>,
-      director: Director<TDirector>,
+      director: Director<TDirector>
+    ): <TData extends Record<string, any>, TPage extends wx.Page & Record<string, any>>(
       options: wx.Page<TData & Partial<TState>> & TPage & MappedDirector<TDirector>
-    ): void
+    ) => void
   }
   const request: request
   const wx: wx.Wrapped<wx.internal>
