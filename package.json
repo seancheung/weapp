@@ -1,6 +1,6 @@
 {
   "name": "weuse",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Wechat miniprogram utilities",
   "main": "index.js",
   "types": "index.d.ts",
@@ -17,6 +17,11 @@
     "wx",
     "miniprogram",
     "mpvue",
+    "request",
+    "canvas",
+    "promise",
+    "store",
+    "state",
     "微信",
     "小程序"
   ],

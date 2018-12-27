@@ -1043,12 +1043,40 @@ declare namespace weuse {
       [x: string]: any
     }
     type Reducer<T extends Record<string, any>> = (state: T, action: Action) => T
-    type Dispatch = (data: Action) => void
+    type Dispatch = (action: Action) => void
     type Director<T extends Record<string, Function>> = (dispatch: Dispatch) => T
+    interface ConnectedPage {
+      /**
+       * 停止接收被动同步
+       */
+      $stopSync?: boolean
+      /**
+       * 主动同步订阅的 state
+       *
+       * @param cb 完成后回调
+       */
+      $sync?(cb?: () => void): void
+    }
     interface Store<T extends Record<string, any>> {
+      /**
+       * 状态
+       */
       state: T
+      /**
+       * 处理状态的 Reducer
+       */
       reducer: Reducer<T>
-      dispatch(data: Action): void
+      /**
+       * 触发一个 Action
+       *
+       * @param action 移交给 Reducer 的 Action
+       */
+      dispatch(action: Action): void
+      /**
+       * 更新状态
+       *
+       * @param state 新状态
+       */
       setState(state: Partial<T>): void
     }
     /**
@@ -1075,7 +1103,7 @@ declare namespace weuse {
      */
     function createStore<T extends Record<string, any>>(reducer: Reducer<T>): Store<T>
     /**
-     * 创建一个关联指定 Store 的 App.
+     * 创建一个关联指定 Store 的 App
      *
      * @param store 关联的 Store
      * @returns App 构造器
@@ -1103,7 +1131,7 @@ declare namespace weuse {
     function connect<TState extends Record<string, any>>(
       stateMapper: StateMapper<TState>
     ): <TData extends Record<string, any>, TPage extends wx.Page & Record<string, any>>(
-      options: wx.Page<TData & Partial<TState>> & TPage
+      options: wx.Page<TData & Partial<TState>> & TPage & ConnectedPage
     ) => void
     /**
      * 创建一个关联默认 Provider 的 Page
@@ -1116,7 +1144,7 @@ declare namespace weuse {
       stateMapper: StateMapper<TState>,
       director: Director<TDirector>
     ): <TData extends Record<string, any>, TPage extends wx.Page & Record<string, any>>(
-      options: wx.Page<TData & Partial<TState>> & TPage & MappedDirector<TDirector>
+      options: wx.Page<TData & Partial<TState>> & TPage & ConnectedPage & MappedDirector<TDirector>
     ) => void
   }
   const request: request
