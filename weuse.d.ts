@@ -1031,6 +1031,19 @@ declare namespace weuse {
     function saveImageToPhotosAlbum(
       opts: Parameter<saveImageToPhotosAlbum>
     ): ReturnType<saveImageToPhotosAlbum>
+    /**
+     * 深克隆
+     *
+     * @param source 对象
+     */
+    function clone<T>(source: T): T;
+    /**
+     * 递归合并
+     *
+     * @param source 对象
+     * @param target 对象
+     */
+    function merge(source: any, target: any): any;
   }
   namespace store {
     type StateMapper<T> = (state: Record<string, any>) => T

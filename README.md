@@ -660,6 +660,14 @@ const url = weuse.utils.joinUrl('http://myapi.com/', '/api/v1', 'items/', '1')
 
 检查权限并写入相册
 
+**weuse.utils.clone(source: any): any**
+
+深克隆
+
+**weuse.utils.merge(source: any, target: any): any**
+
+递归合并
+
 ### Store
 
 **weuse.store**

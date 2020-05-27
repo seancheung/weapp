@@ -102,3 +102,51 @@ export async function saveImageToPhotosAlbum(
   await authorize('scope.writePhotosAlbum')
   return wrapped.saveImageToPhotosAlbum(opts)
 }
+
+/**
+ * 深克隆
+ *
+ * @param {any} source 对象
+ * @returns {any}
+ */
+export function clone(source: any) {
+    return source != null ? JSON.parse(JSON.stringify(source)) : source;
+}
+
+/**
+ * 递归克隆
+ *
+ * @param {any} source 对象
+ * @param {any} target 对象
+ * @returns {any}
+ */
+export function merge(source: any, target: any) {
+    if (target == null) {
+        return clone(source);
+    }
+    if (source == null) {
+        return clone(target);
+    }
+    if (typeof source !== 'object' || typeof target !== 'object') {
+        return clone(target);
+    }
+    const merge = (source: any, target: any) => {
+        Object.keys(target).forEach(key => {
+            if (source[key] == null) {
+                source[key] = target[key];
+            } else if (typeof source[key] === 'object') {
+                if (typeof target[key] === 'object') {
+                    merge(source[key], target[key]);
+                } else {
+                    source[key] = target[key];
+                }
+            } else {
+                source[key] = target[key];
+            }
+        });
+
+        return source;
+    };
+
+    return merge(clone(source), clone(target));
+}
