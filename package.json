@@ -31,7 +31,9 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint 'src/**/*.ts'",
     "prebuild": "del-cli lib && tsc --emitDeclarationOnly",
-    "build": "webpack --config webpack"
+    "build": "webpack --config webpack",
+    "build:dev": "cross-env ENV=development SOURCE_MAP=inline-source-map webpack --config webpack",
+    "build:dist": "cross-env MINIFY=true webpack --config webpack"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
@@ -40,6 +42,7 @@
     "babel-loader": "^8.0.4",
     "babel-plugin-transform-async-to-promises": "^0.8.4",
     "copy-webpack-plugin": "^4.6.0",
+    "cross-env": "^7.0.2",
     "del-cli": "^1.1.0",
     "prettier": "^1.15.2",
     "tslint": "^5.11.0",
