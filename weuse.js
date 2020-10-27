@@ -114,6 +114,14 @@ __webpack_require__.d(canvas_namespaceObject, "getLayerHeight", function() { ret
 __webpack_require__.d(canvas_namespaceObject, "drawLayer", function() { return drawLayer; });
 __webpack_require__.d(canvas_namespaceObject, "drawText", function() { return drawText; });
 __webpack_require__.d(canvas_namespaceObject, "drawImage", function() { return drawImage; });
+var redux_namespaceObject = {};
+__webpack_require__.r(redux_namespaceObject);
+__webpack_require__.d(redux_namespaceObject, "createStore", function() { return createStore; });
+__webpack_require__.d(redux_namespaceObject, "combineReducers", function() { return combineReducers; });
+__webpack_require__.d(redux_namespaceObject, "createProvider", function() { return createProvider; });
+__webpack_require__.d(redux_namespaceObject, "createConsumer", function() { return createConsumer; });
+__webpack_require__.d(redux_namespaceObject, "Provider", function() { return Provider; });
+__webpack_require__.d(redux_namespaceObject, "Consumer", function() { return Consumer; });
 var storage_namespaceObject = {};
 __webpack_require__.r(storage_namespaceObject);
 __webpack_require__.d(storage_namespaceObject, "persist", function() { return persist; });
@@ -125,13 +133,6 @@ __webpack_require__.d(storage_namespaceObject, "flush", function() { return flus
 __webpack_require__.d(storage_namespaceObject, "del", function() { return del; });
 __webpack_require__.d(storage_namespaceObject, "set", function() { return set; });
 __webpack_require__.d(storage_namespaceObject, "get", function() { return get; });
-var store_namespaceObject = {};
-__webpack_require__.r(store_namespaceObject);
-__webpack_require__.d(store_namespaceObject, "combineReducers", function() { return combineReducers; });
-__webpack_require__.d(store_namespaceObject, "createDirector", function() { return createDirector; });
-__webpack_require__.d(store_namespaceObject, "createStore", function() { return createStore; });
-__webpack_require__.d(store_namespaceObject, "provider", function() { return provider; });
-__webpack_require__.d(store_namespaceObject, "connect", function() { return connect; });
 var utils_namespaceObject = {};
 __webpack_require__.r(utils_namespaceObject);
 __webpack_require__.d(utils_namespaceObject, "saveImageToPhotosAlbum", function() { return saveImageToPhotosAlbum; });
@@ -757,6 +758,352 @@ function drawImage(ctx, layer) {
   ctx.drawImage.apply(ctx, params);
   ctx.restore();
 }
+// CONCATENATED MODULE: ./src/redux.ts
+function redux_toConsumableArray(arr) { return redux_arrayWithoutHoles(arr) || redux_iterableToArray(arr) || redux_nonIterableSpread(); }
+
+function redux_nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function redux_iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function redux_arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function redux_objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { redux_defineProperty(target, key, source[key]); }); } return target; }
+
+function redux_defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function redux_typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { redux_typeof = function _typeof(obj) { return typeof obj; }; } else { redux_typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return redux_typeof(obj); }
+
+/**
+ * 用来维持应用所有的`state`树 的一个对象
+ */
+
+/**
+ * 创建一个`store`来以存放应用中所有的`state`
+ *
+ * @param reducer 接收两个参数，分别是当前的`state`树和要处理的`action`，返回新的`state`树
+ * @param preloadedState 初始时的`state`
+ */
+function createStore(reducer, preloadedState) {
+  if (typeof reducer !== 'function') {
+    throw new Error('Expected the reducer to be a function.');
+  }
+
+  var $currentState = preloadedState;
+  var $currentReducer = reducer;
+  var $currentListeners = [];
+  var $nextListeners = $currentListeners;
+  var $isDispatching = false;
+
+  function ensureListeners() {
+    if ($nextListeners === $currentListeners) {
+      $nextListeners = $currentListeners.slice();
+    }
+  }
+
+  function dispatch(action) {
+    if (!action || redux_typeof(action) !== 'object') {
+      throw new Error('Actions must be plain objects.');
+    }
+
+    if (typeof action.type === 'undefined') {
+      throw new Error('Actions may not have an undefined "type" property. ' + 'Have you misspelled a constant?');
+    }
+
+    if ($isDispatching) {
+      throw new Error('Reducers may not dispatch actions.');
+    }
+
+    try {
+      $isDispatching = true;
+      $currentState = $currentReducer.call(null, $currentState, action);
+    } finally {
+      $isDispatching = false;
+    }
+
+    var listeners = $currentListeners = $nextListeners;
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = listeners[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var _listener = _step.value;
+
+        _listener.call(null);
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return != null) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+
+    return action;
+  }
+
+  function getState() {
+    if ($isDispatching) {
+      throw new Error('You may not call store.getState() while the reducer is executing. The reducer has already received the state as an argument. Pass it down from the top reducer instead of reading it from the store.');
+    }
+
+    return $currentState;
+  }
+
+  function subscribe(listener) {
+    if ($isDispatching) {
+      throw new Error('You may not call store.subscribe() while the reducer is executing. If you would like to be notified after the store has been updated, subscribe from a component and invoke store.getState() in the callback to access the latest state. See https://redux.js.org/api/store#subscribelistener for more details.');
+    }
+
+    var isSubscribed = true;
+    ensureListeners();
+    $nextListeners.push(listener);
+    return function unsubscribe() {
+      if (!isSubscribed) {
+        return;
+      }
+
+      if ($isDispatching) {
+        throw new Error('You may not unsubscribe from a store listener while the reducer is executing. See https://redux.js.org/api/store#subscribelistener for more details.');
+      }
+
+      isSubscribed = false;
+      ensureListeners();
+      var index = $nextListeners.indexOf(listener);
+      $nextListeners.splice(index, 1);
+      $currentListeners = null;
+    };
+  }
+
+  function replaceReducer(nextReducer) {
+    if (typeof nextReducer !== 'function') {
+      throw new Error('Expected the reducer to be a function.');
+    }
+
+    $currentReducer = nextReducer;
+    dispatch({
+      type: '::replace'
+    });
+  }
+
+  dispatch({
+    type: '::init'
+  });
+  return {
+    getState: getState,
+    dispatch: dispatch,
+    subscribe: subscribe,
+    replaceReducer: replaceReducer
+  };
+}
+/**
+ * 把一个由多个不同`reducer`函数作为`value`的`object`，合并成一个最终的`reducer`函数
+ *
+ * @param reducers 多个不同`reducer`组成的对象
+ * @returns 一个调用`reducers`对象里所有`reducer`的`reducer`
+ */
+
+function combineReducers(reducers) {
+  return function () {
+    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var action = arguments.length > 1 ? arguments[1] : undefined;
+    return Object.keys(reducers).reduce(function (o, k) {
+      o[k] = reducers[k](state[k], action);
+      return o;
+    }, {});
+  };
+}
+/**
+ * 提供`store`的生产者
+ */
+
+/**
+ * 创建一个提供`store`的生产者
+ *
+ * @param store 要注入的`store`实例
+ * @param options 目标实例
+ */
+function createProvider(store, options) {
+  return redux_objectSpread({}, options, {
+    get $store() {
+      return store;
+    }
+
+  });
+}
+function createConsumer(options, stateMapper) {
+  var onLoad = options.onLoad,
+      onUnload = options.onUnload;
+  var _stateMapper = stateMapper;
+
+  var _disconn;
+
+  function _dispatch(action) {
+    var store = this.$store || getApp().$store;
+
+    if (store) {
+      return store.dispatch(action);
+    }
+  }
+
+  function _onLoad() {
+    var _this = this;
+
+    var store = this.$store || getApp().$store;
+
+    if (store && typeof _stateMapper === 'function' && _disconn == null) {
+      _disconn = store.subscribe(function () {
+        var state = store.getState();
+
+        var data = _stateMapper.call(null, state);
+
+        _this.setData(data);
+      });
+      store.dispatch({
+        type: '::connect'
+      });
+    }
+
+    if (typeof onLoad === 'function') {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      onLoad.apply(this, args);
+    }
+  }
+
+  function _onUnload() {
+    if (typeof _disconn === 'function') {
+      _disconn.call(null);
+
+      _disconn = undefined;
+    }
+
+    if (typeof onUnload === 'function') {
+      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        args[_key2] = arguments[_key2];
+      }
+
+      onUnload.apply(this, args);
+    }
+  }
+
+  return redux_objectSpread({}, options, {
+    $dispatch: _dispatch,
+    onLoad: _onLoad,
+    onUnload: _onUnload
+  });
+}
+/**
+ * 将一个类标记为提供`store`的生产者
+ *
+ * @param store 要注入的`store`实例
+ */
+
+function Provider(store) {
+  return function (target) {
+    // NOTE: 此处只能通过`prototype`修改且不能使用`Object.defineProperty`否则`App`与`Page`构造器无法复制
+    target.prototype.$store = store;
+  };
+}
+var $mapper = '__mappers__';
+/**
+ * 将一个类标记为订阅`store`变化的消费者
+ */
+
+function Consumer(stateMapper) {
+  return function (target) {
+    var _stateMapper = stateMapper;
+    var mapper = target.prototype[$mapper];
+
+    if (mapper) {
+      var initMapper = stateMapper;
+
+      _stateMapper = function _stateMapper(state) {
+        return mapper.reduce(function (p, c) {
+          return Object.assign(p, redux_defineProperty({}, c.key, c.path.reduce(function (o, k) {
+            return o[k];
+          }, state)));
+        }, initMapper ? initMapper.call(null, state) : {});
+      };
+    }
+
+    var options = createConsumer({
+      onLoad: target.prototype.onLoad,
+      onUnload: target.prototype.onUnload
+    }, _stateMapper);
+    Object.assign(target.prototype, options);
+  };
+}
+
+(function (_Consumer) {
+  /**
+   * 子状态绑定对象
+   */
+
+  /**
+   * 将一个属性映射为`store`中的指定状态
+   *
+   * @param name `store`中对应状态的名称
+   */
+
+  /**
+   * 将一个属性映射为`store`中的指定状态
+   */
+  function State(arg1, propertyKey) {
+    return bindState([], arg1, propertyKey);
+  }
+
+  _Consumer.State = State;
+
+  function namespace(name) {
+    return {
+      State: function State(arg1, propertyKey) {
+        return bindState([name], arg1, propertyKey);
+      }
+    };
+  }
+
+  _Consumer.namespace = namespace;
+})(Consumer || (Consumer = {}));
+
+function bindState(ns, arg1, propertyKey) {
+  if (!propertyKey) {
+    return function (target, key) {
+      if (!target[$mapper]) {
+        Object.defineProperty(target, $mapper, {
+          value: [],
+          enumerable: false
+        });
+      }
+
+      target[$mapper].push({
+        key: key,
+        path: [].concat(redux_toConsumableArray(ns), [arg1 || key])
+      });
+    };
+  }
+
+  if (!arg1[$mapper]) {
+    Object.defineProperty(arg1, $mapper, {
+      value: [],
+      enumerable: false
+    });
+  }
+
+  arg1[$mapper].push({
+    key: propertyKey,
+    path: [].concat(redux_toConsumableArray(ns), [propertyKey])
+  });
+}
 // CONCATENATED MODULE: ./src/storage.ts
 function _continue(value, then) {
   return value && value.then ? value.then(then) : then(value);
@@ -1145,213 +1492,6 @@ function reviver(key, value) {
 /**
  * 缓存选项
  */
-// CONCATENATED MODULE: ./src/store.ts
-function store_objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { store_defineProperty(target, key, source[key]); }); } return target; }
-
-function store_defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function store_slicedToArray(arr, i) { return store_arrayWithHoles(arr) || store_iterableToArrayLimit(arr, i) || store_nonIterableRest(); }
-
-function store_nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
-
-function store_iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
-
-function store_arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
-function store_toConsumableArray(arr) { return store_arrayWithoutHoles(arr) || store_iterableToArray(arr) || store_nonIterableSpread(); }
-
-function store_nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function store_iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function store_arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
-// tslint:disable:no-invalid-this no-shadowed-variable
-function isConnected(page) {
-  return typeof page.$sync === 'function';
-}
-
-function fix(data) {
-  return Object.keys(data).reduce(function (o, k) {
-    o[k] = data[k];
-
-    if (o[k] === undefined) {
-      o[k] = null;
-    }
-
-    return o;
-  }, {});
-}
-
-function shallowEql(objA, objB) {
-  if (objA === objB) {
-    return true;
-  }
-
-  var keysA = Object.keys(objA);
-  var keysB = Object.keys(objB);
-
-  if (keysA.length !== keysB.length) {
-    return false;
-  }
-
-  return Array.from(new Set([].concat(store_toConsumableArray(keysA), store_toConsumableArray(keysB)))).every(function (k) {
-    return objA[k] === objB[k];
-  });
-}
-
-/**
- * 合并多个 Reducers
- *
- * @param reducers 要进行合并的 Reducer
- * @returns 合并后的 Reducer
- */
-function combineReducers(reducers) {
-  return function () {
-    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var action = arguments.length > 1 ? arguments[1] : undefined;
-    return Object.keys(reducers).reduce(function (o, k) {
-      o[k] = reducers[k](state, action);
-      return o;
-    }, {});
-  };
-}
-/**
- * 创建一个 Director
- *
- * @param actors 要转换的 Actors
- * @returns Director
- */
-
-function createDirector(actors) {
-  return function (dispatch) {
-    return Object.entries(actors).reduce(function (t, _ref) {
-      var _ref2 = store_slicedToArray(_ref, 2),
-          k = _ref2[0],
-          func = _ref2[1];
-
-      return Object.assign(t, store_defineProperty({}, k, function () {
-        return func.apply(void 0, arguments)(dispatch);
-      }));
-    }, {});
-  };
-}
-/**
- * 创建一个 Store
- *
- * @param reducer 关联的 Reducer
- * @returns Store
- */
-
-function createStore(reducer) {
-  return {
-    state: {},
-    reducer: reducer,
-    dispatch: function dispatch(action) {
-      var state = this.reducer(this.state, action);
-      this.setState(state);
-    },
-    setState: function setState(state) {
-      var _this = this;
-
-      if (!shallowEql(this.state, state)) {
-        Object.assign(this.state, state);
-        getCurrentPages().forEach(function (p) {
-          return isConnected(p) && !p.$stopSync && p.$sync(_this.state);
-        });
-      }
-    }
-  };
-}
-/**
- * 创建一个关联指定 Store 的 App
- *
- * @param store 关联的 Store
- * @returns App 构造器
- */
-
-function provider(store) {
-  return function (options) {
-    var _ref3 = options || {},
-        _onLaunch = _ref3.onLaunch;
-
-    App(store_objectSpread({}, options, {
-      store: store,
-      onLaunch: function onLaunch(opts) {
-        this.store.dispatch({
-          type: '::init'
-        });
-
-        if (_onLaunch) {
-          _onLaunch.call(this, opts);
-        }
-      }
-    }));
-  };
-}
-/**
- * 创建一个关联默认 Provider 的 Page
- *
- * @returns Page 构造器
- */
-
-function connect(stateMapper, director) {
-  return function (options) {
-    if (stateMapper) {
-      var _ref4 = options || {},
-          _onLoad = _ref4.onLoad;
-
-      options = store_objectSpread({}, options, {
-        $sync: function $sync(state, cb) {
-          if (typeof state === 'function') {
-            cb = state;
-            state = null;
-          }
-
-          if (state == null) {
-            var app = getApp();
-            state = app.store.state;
-          }
-
-          var data = fix(stateMapper(state));
-
-          if (Object.keys(data).length > 0) {
-            this.setData(data, cb);
-          } else if (cb) {
-            cb();
-          }
-        },
-        onLoad: function onLoad(query) {
-          var _this2 = this;
-
-          this.$sync(function () {
-            if (_onLoad) {
-              _onLoad.call(_this2, query);
-            }
-          });
-        }
-      });
-    }
-
-    if (director) {
-      var _ref5 = options || {},
-          _onLoad2 = _ref5.onLoad;
-
-      options = store_objectSpread({}, options, {
-        onLoad: function onLoad(query) {
-          var app = getApp();
-          Object.assign(this, director(app.store.dispatch.bind(app.store)));
-
-          if (_onLoad2) {
-            _onLoad2.call(this, query);
-          }
-        }
-      });
-    }
-
-    Page(options);
-  };
-}
 // CONCATENATED MODULE: ./src/utils.ts
 function utils_typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { utils_typeof = function _typeof(obj) { return typeof obj; }; } else { utils_typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return utils_typeof(obj); }
 
@@ -1836,8 +1976,8 @@ var request = Object.assign(defaults(), {
 /* concated harmony reexport promise */__webpack_require__.d(__webpack_exports__, "promise", function() { return promise_namespaceObject; });
 /* concated harmony reexport canvas */__webpack_require__.d(__webpack_exports__, "canvas", function() { return canvas_namespaceObject; });
 /* concated harmony reexport storage */__webpack_require__.d(__webpack_exports__, "storage", function() { return storage_namespaceObject; });
-/* concated harmony reexport store */__webpack_require__.d(__webpack_exports__, "store", function() { return store_namespaceObject; });
 /* concated harmony reexport utils */__webpack_require__.d(__webpack_exports__, "utils", function() { return utils_namespaceObject; });
+/* concated harmony reexport redux */__webpack_require__.d(__webpack_exports__, "redux", function() { return redux_namespaceObject; });
 
 
 

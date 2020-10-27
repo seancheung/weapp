@@ -1036,129 +1036,177 @@ declare namespace weuse {
      *
      * @param source 对象
      */
-    function clone<T>(source: T): T;
+    function clone<T>(source: T): T
     /**
      * 递归合并
      *
      * @param source 对象
      * @param target 对象
      */
-    function merge(source: any, target: any): any;
+    function merge(source: any, target: any): any
   }
-  namespace store {
-    type StateMapper<T> = (state: Record<string, any>) => T
-    type Actor = (...args: any[]) => (dispatch: Dispatch) => any
-    type MappedDirector<T extends Record<string, Actor>> = {
-      [K in keyof T]?: (...args: Parameters<T[K]>) => ReturnType<ReturnType<T[K]>>
-    }
-    interface Action {
-      type: string
+  namespace redux {
+    interface Action<T extends Action.Type> {
+      /**
+       * 分发消息类别
+       */
+      type: T
       [x: string]: any
     }
-    type Reducer<T extends Record<string, any>> = (state: T, action: Action) => T
-    type Dispatch = (action: Action) => void
-    type Director<T extends Record<string, Function>> = (dispatch: Dispatch) => T
-    interface ConnectedPage {
-      /**
-       * 停止接收被动同步
-       */
-      $stopSync?: boolean
-      /**
-       * 主动同步订阅的 state
-       *
-       * @param cb 完成后回调
-       */
-      $sync?(cb?: () => void): void
+    namespace Action {
+      type Type = string | number | symbol
     }
-    interface Store<T extends Record<string, any>> {
+    type Reducer<S, T extends Action.Type> = (state: S, action: Action<T>) => S
+    type Subscriber = () => void
+    type Unsubscribe = () => void
+    interface ReducerMap {
+      [x: string]: Reducer<any, any>
+    }
+    type CombinedReducer<M extends ReducerMap> = Reducer<
+      {
+        [K in keyof M]: M[K] extends Reducer<infer S, any> ? S : never
+      },
+      {
+        [K in keyof M]: M[K] extends Reducer<any, infer T> ? T : never
+      }[keyof M]
+    >
+    /**
+     * 用来维持应用所有的`state`树 的一个对象
+     */
+    interface Store<S, T extends Action.Type> {
       /**
-       * 状态
-       */
-      state: T
-      /**
-       * 处理状态的 Reducer
-       */
-      reducer: Reducer<T>
-      /**
-       * 触发一个 Action
+       * 返回应用当前的`state`树
        *
-       * @param action 移交给 Reducer 的 Action
+       * @returns 应用当前的`state`树
        */
-      dispatch(action: Action): void
+      getState(): S
       /**
-       * 更新状态
+       * 分发`action`
        *
-       * @param state 新状态
+       * @param action 描述应用变化的普通对象
+       * @returns 要`dispatch`的`action`
        */
-      setState(state: Partial<T>): void
+      dispatch<R extends Action<T>>(action: R): R
+      /**
+       * 添加一个变化监听器
+       *
+       * @param listener 每当`dispatch`的时候都会执行的回调
+       * @returns 可以解绑变化监听器的函数
+       */
+      subscribe(listener: Subscriber): Unsubscribe
+      /**
+       * 替换`store`当前用来计算`state`的`reducer`
+       *
+       * @param nextReducer `store`会使用的下一个`reducer`
+       */
+      replaceReducer(nextReducer: Reducer<S, T>): void
     }
     /**
-     * 合并多个 Reducers
+     * 创建一个`store`来以存放应用中所有的`state`
      *
-     * @param reducers 要进行合并的 Reducer
-     * @returns 合并后的 Reducer
+     * @param reducer 接收两个参数，分别是当前的`state`树和要处理的`action`，返回新的`state`树
+     * @param preloadedState 初始时的`state`
      */
-    function combineReducers<T extends Record<string, any>>(
-      reducers: Record<string, Reducer<any>>
-    ): Reducer<T>
+    function createStore<S, T extends Action.Type>(
+      reducer: Reducer<S, T>,
+      preloadedState?: S
+    ): Store<S, T>
     /**
-     * 创建一个 Director
+     * 把一个由多个不同`reducer`函数作为`value`的`object`，合并成一个最终的`reducer`函数
      *
-     * @param actors 要转换的 Actors
-     * @returns Director
+     * @param reducers 多个不同`reducer`组成的对象
+     * @returns 一个调用`reducers`对象里所有`reducer`的`reducer`
      */
-    function createDirector<T extends Record<string, Actor>>(actors?: T): Director<T>
+    function combineReducers<M extends ReducerMap>(reducers: M): CombinedReducer<M>
     /**
-     * 创建一个 Store
-     *
-     * @param reducer 关联的 Reducer
-     * @returns Store
+     * 提供`store`的生产者
      */
-    function createStore<T extends Record<string, any>>(reducer: Reducer<T>): Store<T>
+    interface Provider<S = any, T extends Action.Type = any> {
+      /**
+       * 注入的`store`
+       */
+      readonly $store: Store<S, T>
+    }
     /**
-     * 创建一个关联指定 Store 的 App
+     * 创建一个提供`store`的生产者
      *
-     * @param store 关联的 Store
-     * @returns App 构造器
+     * @param store 要注入的`store`实例
+     * @param options 目标实例
      */
-    function provider<TState extends Record<string, any>>(
-      store: Store<TState>
-    ): <TApp extends wx.App & Record<string, any>>(options: wx.App & TApp) => void
+    function createProvider<R extends Record<string, any>, S, T extends Action.Type>(
+      store: Store<S, T>,
+      options: R
+    ): R & Provider
+    type StateMapper<S, U> = (state: S) => U
     /**
-     * 创建一个关联默认 Provider 的 Page
-     *
-     * @returns Page 构造器
+     * 订阅`store`变化的消费者
      */
-    function connect(): <
-      TData extends Record<string, any>,
-      TPage extends wx.Page & Record<string, any>
-    >(
-      options: wx.Page<TData> & TPage
-    ) => void
+    interface Consumer<T extends Action.Type = any> {
+      /**
+       * 分发`action`
+       *
+       * @param action 描述应用变化的普通对象
+       */
+      $dispatch(action: Action<T>): void
+    }
     /**
-     * 创建一个关联默认 Provider 的 Page
+     * 创建一个订阅`store`变化的消费者
      *
-     * @param stateMapper 状态订阅映射
-     * @returns Page 构造器
-     */
-    function connect<TState extends Record<string, any>>(
-      stateMapper: StateMapper<TState>
-    ): <TData extends Record<string, any>, TPage extends wx.Page & Record<string, any>>(
-      options: wx.Page<TData & Partial<TState>> & TPage & ConnectedPage
-    ) => void
+     * @param options 目标实例
+     */ function createConsumer<R extends Record<string, any>, T extends Action.Type>(
+      options: R
+    ): R & Consumer<T>
     /**
-     * 创建一个关联默认 Provider 的 Page
+     * 创建一个订阅`store`变化的消费者
      *
-     * @param stateMapper 状态订阅映射
-     * @param director Director 映射
-     * @returns Page 构造器
+     * @param options 目标实例
+     * @param stateMapper 状态映射函数
      */
-    function connect<TState extends Record<string, any>, TDirector extends Record<string, Actor>>(
-      stateMapper: StateMapper<TState>,
-      director: Director<TDirector>
-    ): <TData extends Record<string, any>, TPage extends wx.Page & Record<string, any>>(
-      options: wx.Page<TData & Partial<TState>> & TPage & ConnectedPage & MappedDirector<TDirector>
-    ) => void
+    function createConsumer<R extends Record<string, any>, S, T extends Action.Type, U = any>(
+      options: R,
+      stateMapper: StateMapper<S, U>
+    ): R & Consumer<T>
+    /**
+     * 将一个类标记为提供`store`的生产者
+     *
+     * @param store 要注入的`store`实例
+     */
+    function Provider<S, T extends Action.Type>(store: Store<S, T>): ClassDecorator
+    /**
+     * 将一个类标记为订阅`store`变化的消费者
+     */
+    function Consumer(): ClassDecorator
+    /**
+     * 将一个类标记为订阅`store`变化的消费者
+     *
+     * @param stateMapper 状态映射函数
+     */
+    function Consumer<S, U>(stateMapper: StateMapper<S, U>): ClassDecorator
+    namespace Consumer {
+      /**
+       * 子状态绑定对象
+       */
+      interface Namespace {
+        State(name: string): PropertyDecorator
+        State(target: Object, propertyKey: string | symbol): void
+      }
+      /**
+       * 将一个属性映射为`store`中的指定状态
+       *
+       * @param name `store`中对应状态的名称
+       */
+      function State(name: string): PropertyDecorator
+      /**
+       * 将一个属性映射为`store`中的指定状态
+       */
+      function State(target: Object, propertyKey: string | symbol): void
+      /**
+       * 获取`store`中指定子状态的绑定对象
+       *
+       * @param name `store`中对应的子状态的名称
+       */
+      function namespace(name: string): Namespace
+    }
   }
   const request: request
   const wx: wx.Wrapped<wx.internal>

@@ -1,6 +1,6 @@
 {
   "name": "weuse",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Wechat miniprogram utilities",
   "main": "index.js",
   "types": "index.d.ts",
@@ -38,7 +38,7 @@
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.2.3",
-    "@babel/preset-typescript": "^7.1.0",
+    "@babel/preset-typescript": "^7.12.1",
     "babel-loader": "^8.0.4",
     "babel-plugin-transform-async-to-promises": "^0.8.4",
     "copy-webpack-plugin": "^4.6.0",

@@ -8,7 +8,7 @@
 - [缓存时效实现](#缓存)
 - [HTTP 请求封装](#网络请求)
 - [Canvas 封装](#canvas)
-- [Store 状态管理](#store)
+- [Redux 状态管理](#redux)
 
 ## 安装
 
@@ -668,228 +668,170 @@ const url = weuse.utils.joinUrl('http://myapi.com/', '/api/v1', 'items/', '1')
 
 递归合并
 
-### Store
+### Redux
 
-**weuse.store**
+**weuse.redux**
 
 > 状态管理
 
-**weuse.store.createStore(reducer: Reducer): Store**
+**weuse.redux.createStore(reducer: Reducer): Store**
 
 创建一个 Store
 
-**weuse.store.combineReducers(reducers: object): Reducer**
+**weuse.redux.combineReducers(reducers: object): Reducer**
 
 合并多个 Reducers
 
-**weuse.store.createDirector(actors: object): Director**
+**weuse.redux.createProvider(store: Store, options: object): Provider**
 
-创建一个 Director
-
-**weuse.store.provider(actors: object): AppConstructor**
-
-创建一个关联指定 Store 的 App. 返回 App 构造器
-
-**weuse.store.connect(stateMapper?: Function, director?: Director): PageConstructor**
-
-创建一个关联默认 Provider 的 Page. 返回 Page 构造器
-
-`stateMapper` 会将`provider`中`store`的一个或多个`state`插入该 Page 的`data`中. 可通过`this.data`访问
+创建一个 Provider
 
 e.g.
 
-原始页面
-
 ```javascript
-Page({
-  data: {
-    //...
-  },
-  onLoad() {
-    //...
-  }
-})
+App(
+  weuse.redux.createProvider(store, {
+    onLaunch() {
+      //...
+      const state = this.$store.getState()
+    }
+  })
+)
 ```
 
-连接状态
+**weuse.redux.createConsumer(options: object, stateMapper?: StateMapper): Consumer**
+
+创建一个 Consumer
+
+e.g.
 
 ```javascript
-weuse.store.connect(state => {
-  return {
-    token: state.token,
-    name: state.userName || 'unknown',
-    count: state.count + 1
-  }
-})({
-  data: {
+Page(
+  weuse.redux.createConsumer({
+    onLoad() {
+      //...
+      this.$dispatch({ type: 'FETCH_DATA' })
+    }
+  })
+)
+// 注入state
+Page(
+  weuse.redux.createConsumer(
+    {
+      onLoad() {
+        //...
+        console.log(this.data.items)
+        console.log(this.data.count)
+      }
+    },
+    state => ({
+      items: state.items,
+      count: state.count,
+      name: state.app.name
+    })
+  )
+)
+```
+
+**weuse.redux.Provider(store: Store): ClassDecorator**
+
+Provider 装饰器
+
+e.g.
+
+```typescript
+@Provider(store)
+class MyApp {
+  onLaunch() {
     //...
-  },
+    const state = this.$store.getState()
+  }
+}
+App(new MyApp())
+```
+
+**weuse.redux.Consumer(stateMapper?: StateMapper): ClassDecorator**
+
+Consumer 装饰器
+
+e.g.
+
+```typescript
+@Consumer()
+class MyPage {
   onLoad() {
     //...
-    console.log(this.data.token)
-    console.log(this.data.name)
+    this.$dispatch({ type: 'FETCH_DATA' })
+  }
+}
+Page(new MyPage())
+
+// 注入state
+@Consumer(state => ({
+  items: state.items,
+  count: state.count
+}))
+class MyPage {
+  onLoad() {
+    //...
+    console.log(this.data.items)
     console.log(this.data.count)
   }
-})
-```
-
-`director` 会将`actors`中的方法插入该 Page 中. 可通过`this`访问
-
-```javascript
-const actors = {
-  increment(value) {
-    return dispatch => {
-      dispatch({ type: 'INCREMENT', value })
-    }
-  }
 }
-const director = weuse.store.createDirector(actors)
-
-weuse.store.connect(
-  null,
-  director
-)({
-  data: {
-    //...
-  },
-  onLoad() {
-    //...
-    this.increment(1)
-  }
-})
 ```
 
-如需停止被动接收状态同步, 设置`Page.$stopSync`为`true`即可. 手动同步订阅的状态可调用`Page.$sync()`
+**weuse.redux.Consumer.State(name?: string): PropertyDecorator**
+
+State 绑定装饰器
 
 e.g.
 
-```javascript
-// 始终不被动接收
-weuse.store.connect(state => ({ token: state.app.token }))({
-  $stopSync: true
-})
+```typescript
+@Consumer()
+class MyPage {
+  @State
+  items: any[]
 
-// 隐藏时不被动接收
-weuse.store.connect(state => ({ token: state.app.token }))({
-  onHide() {
+  @State('count')
+  size: number
+
+  onLoad() {
     //...
-    this.$stopSync = true
-  },
-  onShow() {
-    //...
-    this.$stopSync = false
-    this.$sync()
+    console.log(this.data.items)
+    console.log(this.data.size)
   }
-})
+}
 ```
 
-**完整示例**
+_注: State 绑定可与 Consumer 装饰器中的 StateMapper 参数共存, 若存在同名属性, 前者会覆盖后者_
 
-```javascript
-// ./src/store/actions.js
-module.exports = {
-  GET_USERINFO: 'GET_USERINFO'
-}
+**weuse.redux.Consumer.namespace(name?: string): Namespace**
 
-// ./src/store/reducers.js
-const ACTIONS = require('./actions')
+子 State 绑定对象
 
-module.exports = {
-  app(state = { userInfo: null }, action) {
-    const { pending, error } = action
-    if (pending) {
-      return Object.assign({}, state, { pending: true, error: null })
-    }
-    if (error) {
-      return Object.assign({}, state, { pending: false, error })
-    }
+**weuse.redux.Consumer.Namespace.State(name?: string): PropertyDecorator**
 
-    switch (action.type) {
-      case ACTIONS.GET_USERINFO:
-        return Object.assign({}, state, { userInfo: action.data })
-      default:
-        return state
-    }
-  }
-}
+子 State 绑定装饰器
 
-// ./src/store/creators.js
-const ACTIONS = require('./actions')
+e.g.
 
-module.exports = {
-  beginGetUserInfo() {
-    return {
-      type: ACTIONS.GET_USERINFO,
-      pending: true
-    }
-  },
-  endGetUserInfo(error, res) {
-    return {
-      type: ACTIONS.GET_USERINFO,
-      error,
-      data: res
-    }
-  }
-}
+```typescript
+const app = namespace('app')
+const
+@Consumer()
+class MyPage {
+  @app.State
+  items: any[]
 
-// ./src/store/actors.js
-const creators = require('./creators')
+  @app.State('count')
+  size: number
 
-module.exports = {
-  getUserInfo() {
-    return dispatch => {
-      dispatch(creators.beginGetUserInfo())
-      return weuse.wx
-        .getSetting()
-        .then(res => {
-          if (res.authSetting['scope.userInfo']) {
-            return weuse.wx.getUserInfo().then(res => {
-              dispatch(creators.endGetUserInfo(null, res.userInfo))
-            })
-          }
-        })
-        .catch(err => {
-          dispatch(creators.endGetUserInfo(err))
-        })
-    }
-  }
-}
-
-// ./src/store/index.js
-const weuse = require('../weuse')
-const reducers = require('./reducers')
-
-const store = weuse.store.createStore(weuse.store.combineReducers(reducers))
-
-module.exports = store
-
-// ./app.js
-const weuse = require('./src/weuse')
-const store = require('./src/store/index')
-
-weuse.store.provider(store)({})
-
-// ./pages/index/index.js
-const weuse = require('../../src/weuse')
-const actors = require('../../src/store/actors')
-
-weuse.store.connect(
-  // 此处订阅的store会被插入本页面data中并且自动更新
-  state => ({ info: state.app.userInfo }),
-  // director会将actors中的方法插入本页面中, 可通过this调用
-  weuse.store.createDirector(actors)
-)({
-  data: {
-    motto: 'Hello World'
-  },
   onLoad() {
-    // 调用actors中的方法. 注意该方法是异步的
-    this.getUserInfo().then(() => {
-      // 输出订阅的userInfo
-      console.log(this.data.info)
-    })
+    //...
+    console.log(this.data.items)
+    console.log(this.data.size)
   }
-})
+}
 ```
 
 ## 构建

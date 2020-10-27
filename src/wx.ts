@@ -75,17 +75,26 @@ export declare namespace wx {
       query: Record<string, any>
       isEntryPage: boolean
     }
+    interface UnhandledRejectionOption {
+      reason: string
+      promise: Promise<any>
+    }
+    interface ThemeChangeOption {
+      theme: string
+    }
     interface GetAppOptions {
       allowDefault: boolean
     }
   }
 
   type App = Partial<{
-    onLaunch(options?: App.LaunchShowOption): void
-    onShow(options?: App.LaunchShowOption): void
+    onLaunch(options: App.LaunchShowOption): void
+    onShow(options: App.LaunchShowOption): void
     onHide(): void
-    onError(error?: string): void
-    onPageNotFound(options?: App.PageNotFoundOption): void
+    onError(error: string): void
+    onPageNotFound(options: App.PageNotFoundOption): void
+    onUnhandledRejection(options: App.UnhandledRejectionOption): void
+    onThemeChange(options: App.ThemeChangeOption): void
   }>
 }
 type P<T, R = void> = (options?: T & wx.Options<R>) => any
