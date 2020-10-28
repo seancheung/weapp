@@ -64,16 +64,10 @@ export function createStore<S, T extends Action.Type>(
   if (typeof reducer !== 'function') {
     throw new Error('Expected the reducer to be a function.')
   }
-  let $currentState = preloadedState
-  let $currentReducer = reducer
-  let $currentListeners: Subscriber[] = []
-  let $nextListeners: Subscriber[] = $currentListeners
-  let $isDispatching = false
-  function ensureListeners() {
-    if ($nextListeners === $currentListeners) {
-      $nextListeners = $currentListeners.slice()
-    }
-  }
+  let _state = preloadedState
+  let _reducer = reducer
+  const _listeners: Subscriber[] = []
+  let _dispatching = false
   function dispatch<R extends Action<T>>(action: R): R {
     if (!action || typeof action !== 'object') {
       throw new Error('Actions must be plain objects.')
@@ -83,60 +77,57 @@ export function createStore<S, T extends Action.Type>(
         'Actions may not have an undefined "type" property. ' + 'Have you misspelled a constant?'
       )
     }
-    if ($isDispatching) {
+    if (_dispatching) {
       throw new Error('Reducers may not dispatch actions.')
     }
     try {
-      $isDispatching = true
-      $currentState = $currentReducer.call(null, $currentState, action)
+      _dispatching = true
+      _state = _reducer.call(null, _state, action)
     } finally {
-      $isDispatching = false
+      _dispatching = false
     }
-    const listeners = ($currentListeners = $nextListeners)
+    const listeners = _listeners.slice()
     for (const listener of listeners) {
       listener.call(null)
     }
     return action
   }
   function getState() {
-    if ($isDispatching) {
+    if (_dispatching) {
       throw new Error(
         'You may not call store.getState() while the reducer is executing. The reducer has already received the state as an argument. Pass it down from the top reducer instead of reading it from the store.'
       )
     }
-    return $currentState
+    return _state
   }
   function subscribe(listener: Subscriber): Unsubscribe {
-    if ($isDispatching) {
+    if (_dispatching) {
       throw new Error(
         'You may not call store.subscribe() while the reducer is executing. If you would like to be notified after the store has been updated, subscribe from a component and invoke store.getState() in the callback to access the latest state. See https://redux.js.org/api/store#subscribelistener for more details.'
       )
     }
     let isSubscribed = true
-    ensureListeners()
-    $nextListeners.push(listener)
+    _listeners.push(listener)
 
     return function unsubscribe() {
       if (!isSubscribed) {
         return
       }
-      if ($isDispatching) {
+      if (_dispatching) {
         throw new Error(
           'You may not unsubscribe from a store listener while the reducer is executing. See https://redux.js.org/api/store#subscribelistener for more details.'
         )
       }
       isSubscribed = false
-      ensureListeners()
-      const index = $nextListeners.indexOf(listener)
-      $nextListeners.splice(index, 1)
-      $currentListeners = null
+      const index = _listeners.indexOf(listener)
+      _listeners.splice(index, 1)
     }
   }
   function replaceReducer(nextReducer: Reducer<S, T>): void {
     if (typeof nextReducer !== 'function') {
       throw new Error('Expected the reducer to be a function.')
     }
-    $currentReducer = nextReducer
+    _reducer = nextReducer
     dispatch({ type: '::replace' as T })
   }
   dispatch({ type: '::init' as T })
