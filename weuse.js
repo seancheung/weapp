@@ -144,6 +144,13 @@ __webpack_require__.d(utils_namespaceObject, "decodeQuery", function() { return 
 __webpack_require__.d(utils_namespaceObject, "joinUrl", function() { return joinUrl; });
 __webpack_require__.d(utils_namespaceObject, "clone", function() { return clone; });
 __webpack_require__.d(utils_namespaceObject, "merge", function() { return merge; });
+var vuex_namespaceObject = {};
+__webpack_require__.r(vuex_namespaceObject);
+__webpack_require__.d(vuex_namespaceObject, "createStore", function() { return vuex_createStore; });
+__webpack_require__.d(vuex_namespaceObject, "createProvider", function() { return vuex_createProvider; });
+__webpack_require__.d(vuex_namespaceObject, "createConsumer", function() { return vuex_createConsumer; });
+__webpack_require__.d(vuex_namespaceObject, "Provider", function() { return vuex_Provider; });
+__webpack_require__.d(vuex_namespaceObject, "Consumer", function() { return vuex_Consumer; });
 
 // CONCATENATED MODULE: ./src/promise.ts
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
@@ -203,7 +210,7 @@ function promisify(func) {
 }
 // CONCATENATED MODULE: ./src/wrap.ts
 
-var wrapped = Object.keys(wx).reduce(function (o, k) {
+var wrapped = Object.keys(typeof wx === 'undefined' ? {} : wx).reduce(function (o, k) {
   if (typeof wx[k] === 'function') {
     o[k] = promisify(wx[k]);
   }
@@ -788,17 +795,10 @@ function createStore(reducer, preloadedState) {
     throw new Error('Expected the reducer to be a function.');
   }
 
-  var $currentState = preloadedState;
-  var $currentReducer = reducer;
-  var $currentListeners = [];
-  var $nextListeners = $currentListeners;
-  var $isDispatching = false;
-
-  function ensureListeners() {
-    if ($nextListeners === $currentListeners) {
-      $nextListeners = $currentListeners.slice();
-    }
-  }
+  var _state = preloadedState;
+  var _reducer = reducer;
+  var _listeners = [];
+  var _dispatching = false;
 
   function dispatch(action) {
     if (!action || redux_typeof(action) !== 'object') {
@@ -809,18 +809,19 @@ function createStore(reducer, preloadedState) {
       throw new Error('Actions may not have an undefined "type" property. ' + 'Have you misspelled a constant?');
     }
 
-    if ($isDispatching) {
+    if (_dispatching) {
       throw new Error('Reducers may not dispatch actions.');
     }
 
     try {
-      $isDispatching = true;
-      $currentState = $currentReducer.call(null, $currentState, action);
+      _dispatching = true;
+      _state = _reducer.call(null, _state, action);
     } finally {
-      $isDispatching = false;
+      _dispatching = false;
     }
 
-    var listeners = $currentListeners = $nextListeners;
+    var listeners = _listeners.slice();
+
     var _iteratorNormalCompletion = true;
     var _didIteratorError = false;
     var _iteratorError = undefined;
@@ -850,35 +851,36 @@ function createStore(reducer, preloadedState) {
   }
 
   function getState() {
-    if ($isDispatching) {
+    if (_dispatching) {
       throw new Error('You may not call store.getState() while the reducer is executing. The reducer has already received the state as an argument. Pass it down from the top reducer instead of reading it from the store.');
     }
 
-    return $currentState;
+    return _state;
   }
 
   function subscribe(listener) {
-    if ($isDispatching) {
+    if (_dispatching) {
       throw new Error('You may not call store.subscribe() while the reducer is executing. If you would like to be notified after the store has been updated, subscribe from a component and invoke store.getState() in the callback to access the latest state. See https://redux.js.org/api/store#subscribelistener for more details.');
     }
 
     var isSubscribed = true;
-    ensureListeners();
-    $nextListeners.push(listener);
+
+    _listeners.push(listener);
+
     return function unsubscribe() {
       if (!isSubscribed) {
         return;
       }
 
-      if ($isDispatching) {
+      if (_dispatching) {
         throw new Error('You may not unsubscribe from a store listener while the reducer is executing. See https://redux.js.org/api/store#subscribelistener for more details.');
       }
 
       isSubscribed = false;
-      ensureListeners();
-      var index = $nextListeners.indexOf(listener);
-      $nextListeners.splice(index, 1);
-      $currentListeners = null;
+
+      var index = _listeners.indexOf(listener);
+
+      _listeners.splice(index, 1);
     };
   }
 
@@ -887,7 +889,7 @@ function createStore(reducer, preloadedState) {
       throw new Error('Expected the reducer to be a function.');
     }
 
-    $currentReducer = nextReducer;
+    _reducer = nextReducer;
     dispatch({
       type: '::replace'
     });
@@ -1716,6 +1718,764 @@ function merge(source, target) {
 
   return merge(clone(source), clone(target));
 }
+// CONCATENATED MODULE: ./src/vuex.ts
+function vuex_toConsumableArray(arr) { return vuex_arrayWithoutHoles(arr) || vuex_iterableToArray(arr) || vuex_nonIterableSpread(); }
+
+function vuex_nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function vuex_iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function vuex_arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function vuex_slicedToArray(arr, i) { return vuex_arrayWithHoles(arr) || vuex_iterableToArrayLimit(arr, i) || vuex_nonIterableRest(); }
+
+function vuex_nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function vuex_iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function vuex_arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function vuex_objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { vuex_defineProperty(target, key, source[key]); }); } return target; }
+
+function vuex_defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function vuex_async(f) {
+  return function () {
+    for (var args = [], i = 0; i < arguments.length; i++) {
+      args[i] = arguments[i];
+    }
+
+    try {
+      return Promise.resolve(f.apply(this, args));
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  };
+}
+
+function vuex_await(value, then, direct) {
+  if (direct) {
+    return then ? then(value) : value;
+  }
+
+  if (!value || !value.then) {
+    value = Promise.resolve(value);
+  }
+
+  return then ? value.then(then) : value;
+}
+
+// tslint:disable: no-shadowed-variable
+function createContext(store, namespace, path) {
+  var ctx = {
+    dispatch: !namespace ? store.dispatch : function (type, payload, options) {
+      if (typeof type !== 'string') {
+        options = payload;
+        payload = type;
+        type = type.type;
+      }
+
+      if (!options || !options.root) {
+        type = namespace + type;
+      }
+
+      return store.dispatch(type, payload);
+    },
+    commit: !namespace ? store.commit : function (type, payload, options) {
+      if (typeof type !== 'string') {
+        options = payload;
+        payload = type;
+        type = type.type;
+      }
+
+      if (!options || !options.root) {
+        type = namespace + type;
+      }
+
+      store.commit(type, payload, options);
+    }
+  };
+  Object.defineProperties(ctx, {
+    getters: {
+      get: !namespace ? function () {
+        return store._getters;
+      } : function () {
+        return createGetters(store, namespace);
+      }
+    },
+    state: {
+      get: function get() {
+        return getNestedState(store._state, path);
+      }
+    }
+  });
+  return ctx;
+}
+
+function createGetters(store, namespace) {
+  if (!store._cache.getters) {
+    store._cache.getters = {};
+  }
+
+  if (!store._cache.getters[namespace]) {
+    var pos = namespace.length;
+    store._cache.getters[namespace] = Object.keys(store._getters).reduce(function (proxy, type) {
+      if (type.slice(0, pos) === namespace) {
+        var localType = type.slice(pos);
+        Object.defineProperty(proxy, localType, {
+          get: function get() {
+            return store._getters[type];
+          },
+          enumerable: true
+        });
+      }
+
+      return proxy;
+    }, {});
+  }
+
+  return store._cache.getters[namespace];
+}
+
+function getNestedState(state, path) {
+  return path.reduce(function (p, c) {
+    return p[c];
+  }, state);
+}
+
+function registerMutation(store, type, handler, ctx) {
+  var _this = this;
+
+  var entry = store._mutations[type] || (store._mutations[type] = []);
+  entry.push(function (payload) {
+    handler.call(_this, ctx.state, payload);
+  });
+}
+
+function registerAction(store, type, handler, ctx) {
+  var _this2 = this;
+
+  var entry = store._actions[type] || (store._actions[type] = []);
+  entry.push(vuex_async(function (payload) {
+    return handler.call(_this2, {
+      dispatch: ctx.dispatch,
+      commit: ctx.commit,
+      getters: ctx.getters,
+      state: ctx.state,
+      rootGetters: store._getters,
+      rootState: store._state
+    }, payload);
+  }));
+}
+
+function registerGetter(store, type, rawGetter, ctx) {
+  var _this3 = this;
+
+  if (store._wrappedGetters[type]) {
+    return;
+  }
+
+  store._wrappedGetters[type] = function (root) {
+    return rawGetter.call(null, ctx.state, ctx.getters, root.state, root.getters);
+  };
+
+  Object.defineProperty(store._getters, type, {
+    get: function get() {
+      return store._wrappedGetters[type].call(null, _this3);
+    },
+    enumerable: true
+  });
+}
+
+function installModule(store, rootState, path, module) {
+  if (path.length) {
+    var _state2 = resolveState(module.state);
+
+    path.reduce(function (p, k, i) {
+      if (p[k] == null) {
+        p[k] = {};
+      }
+
+      if (i === path.length - 1) {
+        Object.assign(p[k], _state2 || {});
+      }
+
+      return p;
+    }, rootState);
+  }
+
+  var namespace = getNamespace(store._root, path);
+  var ctx = createContext(store, namespace, path);
+  var mutations = module.mutations,
+      getters = module.getters,
+      actions = module.actions,
+      modules = module.modules;
+
+  if (mutations) {
+    for (var _key in mutations) {
+      var namespacedType = namespace + _key;
+      registerMutation.call(this, store, namespacedType, mutations[_key], ctx);
+    }
+  }
+
+  if (getters) {
+    for (var _key2 in getters) {
+      var _namespacedType = namespace + _key2;
+
+      registerGetter.call(this, store, _namespacedType, getters[_key2], ctx);
+    }
+  }
+
+  if (actions) {
+    for (var _key3 in actions) {
+      var action = actions[_key3];
+
+      var _type = action.root ? _key3 : namespace + _key3;
+
+      var _handler = action.handler || action;
+
+      registerAction.call(this, store, _type, _handler, ctx);
+    }
+  }
+
+  if (modules) {
+    for (var _key4 in modules) {
+      installModule.call(this, store, rootState, path.concat(_key4), modules[_key4]);
+    }
+  }
+}
+
+function getNamespace(module, path) {
+  return path.reduce(function (ns, k) {
+    module = module.modules[k];
+    return ns + (module.namespaced ? k + '/' : '');
+  }, '');
+}
+
+function resolveState(state) {
+  return typeof state === 'function' ? state.call(null) : state;
+}
+/**
+ * 创建一个`store`来以存放应用中所有的`state`
+ *
+ * @param options 选项
+ */
+
+
+function vuex_createStore(options) {
+  var _options = options,
+      state = _options.state;
+  var store = {
+    get state() {
+      return _store._state;
+    },
+
+    get getters() {
+      return _store._getters;
+    },
+
+    commit: commit,
+    dispatch: dispatch,
+    subscribe: subscribe
+  };
+  var _store = {
+    _cache: {},
+    _root: options,
+    _state: resolveState(state),
+    _wrappedGetters: {},
+    _getters: {},
+    _mutations: {},
+    _actions: {},
+    _subscribers: [],
+    commit: commit.bind(store),
+    dispatch: dispatch.bind(store)
+  };
+
+  function commit(type, payload) {
+    var _this4 = this;
+
+    if (typeof type !== 'string') {
+      options = payload;
+      payload = type;
+      type = type.type;
+    }
+
+    var entry = _store._mutations[type];
+
+    if (entry) {
+      entry.forEach(function (func) {
+        return func.call(_this4, payload);
+      });
+    }
+
+    var mutation = {
+      type: type,
+      payload: payload
+    };
+
+    _store._subscribers.slice().forEach(function (func) {
+      return func.call(null, mutation, _this4.state);
+    });
+  }
+
+  function dispatch(type, payload) {
+    var _this5 = this;
+
+    if (typeof type !== 'string') {
+      options = payload;
+      payload = type;
+      type = type.type;
+    }
+
+    var entry = _store._actions[type];
+
+    if (entry) {
+      var res = entry.length > 1 ? Promise.all(entry.map(function (func) {
+        return func.call(_this5, payload);
+      })) : entry[0].call(this, payload);
+      return res;
+    }
+  }
+
+  function subscribe(listener) {
+    _store._subscribers.push(listener);
+
+    return function () {
+      var i = _store._subscribers.indexOf(listener);
+
+      if (i >= 0) {
+        _store._subscribers.splice(i, 1);
+      }
+    };
+  }
+
+  installModule.call(store, _store, _store._state, [], options);
+  return store;
+}
+/**
+ * 提供`store`的生产者
+ */
+
+/**
+ * 创建一个提供`store`的生产者
+ *
+ * @param store 要注入的`store`实例
+ * @param options 目标实例
+ */
+function vuex_createProvider(store, options) {
+  return vuex_objectSpread({}, options, {
+    get $store() {
+      return store;
+    }
+
+  });
+}
+function vuex_createConsumer(options) {
+  var onLoad = options.onLoad,
+      onUnload = options.onUnload;
+
+  var _disconn;
+
+  for (var _len = arguments.length, mappers = new Array(_len > 1 ? _len - 1 : 0), _key5 = 1; _key5 < _len; _key5++) {
+    mappers[_key5 - 1] = arguments[_key5];
+  }
+
+  var resolvedMappers = mappers.map(function (m) {
+    return resolveMapper(m);
+  });
+  var methods = resolveMethods(resolvedMappers);
+  var reducer = resolvedMappers.length ? resolveReducer(resolvedMappers) : null;
+
+  function _onLoad() {
+    var _this6 = this;
+
+    var store = this.$store || getApp().$store;
+
+    if (store && _disconn == null && typeof reducer === 'function') {
+      var listener = function listener() {
+        var data = reducer(store.state, store.getters);
+
+        if (data && Object.keys(data).length) {
+          _this6.setData(data);
+        }
+      };
+
+      _disconn = store.subscribe(listener);
+      listener.call(null);
+    }
+
+    if (typeof onLoad === 'function') {
+      for (var _len2 = arguments.length, args = new Array(_len2), _key6 = 0; _key6 < _len2; _key6++) {
+        args[_key6] = arguments[_key6];
+      }
+
+      onLoad.apply(this, args);
+    }
+  }
+
+  function _onUnload() {
+    if (typeof _disconn === 'function') {
+      _disconn.call(null);
+
+      _disconn = undefined;
+    }
+
+    if (typeof onUnload === 'function') {
+      for (var _len3 = arguments.length, args = new Array(_len3), _key7 = 0; _key7 < _len3; _key7++) {
+        args[_key7] = arguments[_key7];
+      }
+
+      onUnload.apply(this, args);
+    }
+  }
+
+  return vuex_objectSpread({}, options, methods, {
+    onLoad: _onLoad,
+    onUnload: _onUnload
+  });
+}
+
+function resolveReducer(mappers) {
+  return function (state, getters) {
+    return mappers.reduce(function (data, mapper) {
+      if (mapper.state) {
+        Object.entries(mapper.state).forEach(function (_ref) {
+          var _ref2 = vuex_slicedToArray(_ref, 2),
+              k = _ref2[0],
+              v = _ref2[1];
+
+          data[k] = v(state, getters);
+        });
+      }
+
+      if (mapper.getters) {
+        Object.entries(mapper.getters).forEach(function (_ref3) {
+          var _ref4 = vuex_slicedToArray(_ref3, 2),
+              k = _ref4[0],
+              v = _ref4[1];
+
+          data[k] = getters[v];
+        });
+      }
+
+      return data;
+    }, {});
+  };
+}
+
+function resolveMethods(mappers) {
+  return mappers.reduce(function (p, mapper) {
+    if (mapper.mutations) {
+      Object.entries(mapper.mutations).forEach(function (_ref5) {
+        var _ref6 = vuex_slicedToArray(_ref5, 2),
+            k = _ref6[0],
+            v = _ref6[1];
+
+        p[k] = function () {
+          var store = this.$store || getApp().$store;
+
+          for (var _len4 = arguments.length, args = new Array(_len4), _key8 = 0; _key8 < _len4; _key8++) {
+            args[_key8] = arguments[_key8];
+          }
+
+          return v.apply(void 0, [store.commit].concat(args));
+        };
+      });
+    }
+
+    if (mapper.actions) {
+      Object.entries(mapper.actions).forEach(function (_ref7) {
+        var _ref8 = vuex_slicedToArray(_ref7, 2),
+            k = _ref8[0],
+            v = _ref8[1];
+
+        p[k] = function () {
+          var store = this.$store || getApp().$store;
+
+          for (var _len5 = arguments.length, args = new Array(_len5), _key9 = 0; _key9 < _len5; _key9++) {
+            args[_key9] = arguments[_key9];
+          }
+
+          return v.apply(void 0, [store.dispatch].concat(args));
+        };
+      });
+    }
+
+    return p;
+  }, {});
+}
+
+function resolveMapper(mapper) {
+  var res = {};
+
+  if (mapper.state) {
+    if (Array.isArray(mapper.state)) {
+      res.state = mapper.state.reduce(function (p, k) {
+        p[k] = mapper.namespace ? function (state) {
+          return state[mapper.namespace][k];
+        } : function (state) {
+          return state[k];
+        };
+        return p;
+      }, {});
+    } else {
+      res.state = Object.entries(mapper.state).reduce(function (p, _ref9) {
+        var _ref10 = vuex_slicedToArray(_ref9, 2),
+            k = _ref10[0],
+            v = _ref10[1];
+
+        if (typeof v === 'string') {
+          p[k] = mapper.namespace ? function (state) {
+            return state[mapper.namespace][v];
+          } : function (state) {
+            return state[v];
+          };
+        } else {
+          p[k] = v;
+        }
+
+        return p;
+      }, {});
+    }
+  }
+
+  if (mapper.getters) {
+    if (Array.isArray(mapper.getters)) {
+      res.getters = mapper.getters.reduce(function (p, k) {
+        p[k] = mapper.namespace ? mapper.namespace + '/' + k : k;
+        return p;
+      }, {});
+    } else {
+      res.getters = mapper.getters;
+    }
+  }
+
+  if (mapper.mutations) {
+    if (Array.isArray(mapper.mutations)) {
+      res.mutations = mapper.mutations.reduce(function (p, k) {
+        p[k] = mapper.namespace ? function (commit) {
+          for (var _len6 = arguments.length, args = new Array(_len6 > 1 ? _len6 - 1 : 0), _key10 = 1; _key10 < _len6; _key10++) {
+            args[_key10 - 1] = arguments[_key10];
+          }
+
+          return commit.apply(void 0, [mapper.namespace + '/' + k].concat(args));
+        } : function (commit) {
+          for (var _len7 = arguments.length, args = new Array(_len7 > 1 ? _len7 - 1 : 0), _key11 = 1; _key11 < _len7; _key11++) {
+            args[_key11 - 1] = arguments[_key11];
+          }
+
+          return commit.apply(void 0, [k].concat(args));
+        };
+        return p;
+      }, {});
+    } else {
+      res.mutations = Object.entries(mapper.mutations).reduce(function (p, _ref11) {
+        var _ref12 = vuex_slicedToArray(_ref11, 2),
+            k = _ref12[0],
+            v = _ref12[1];
+
+        if (typeof v === 'string') {
+          p[k] = mapper.namespace ? function (commit) {
+            for (var _len8 = arguments.length, args = new Array(_len8 > 1 ? _len8 - 1 : 0), _key12 = 1; _key12 < _len8; _key12++) {
+              args[_key12 - 1] = arguments[_key12];
+            }
+
+            return commit.apply(void 0, [mapper.namespace + '/' + v].concat(args));
+          } : function (commit) {
+            for (var _len9 = arguments.length, args = new Array(_len9 > 1 ? _len9 - 1 : 0), _key13 = 1; _key13 < _len9; _key13++) {
+              args[_key13 - 1] = arguments[_key13];
+            }
+
+            return commit.apply(void 0, [v].concat(args));
+          };
+        } else {
+          p[k] = v;
+        }
+
+        return p;
+      }, {});
+    }
+  }
+
+  if (mapper.actions) {
+    if (Array.isArray(mapper.actions)) {
+      res.actions = mapper.actions.reduce(function (p, k) {
+        p[k] = mapper.namespace ? function (dispatch) {
+          for (var _len10 = arguments.length, args = new Array(_len10 > 1 ? _len10 - 1 : 0), _key14 = 1; _key14 < _len10; _key14++) {
+            args[_key14 - 1] = arguments[_key14];
+          }
+
+          return dispatch.apply(void 0, [mapper.namespace + '/' + k].concat(args));
+        } : function (dispatch) {
+          for (var _len11 = arguments.length, args = new Array(_len11 > 1 ? _len11 - 1 : 0), _key15 = 1; _key15 < _len11; _key15++) {
+            args[_key15 - 1] = arguments[_key15];
+          }
+
+          return dispatch.apply(void 0, [k].concat(args));
+        };
+        return p;
+      }, {});
+    } else {
+      res.actions = Object.entries(mapper.actions).reduce(function (p, _ref13) {
+        var _ref14 = vuex_slicedToArray(_ref13, 2),
+            k = _ref14[0],
+            v = _ref14[1];
+
+        if (typeof v === 'string') {
+          p[k] = mapper.namespace ? function (dispatch) {
+            for (var _len12 = arguments.length, args = new Array(_len12 > 1 ? _len12 - 1 : 0), _key16 = 1; _key16 < _len12; _key16++) {
+              args[_key16 - 1] = arguments[_key16];
+            }
+
+            return dispatch.apply(void 0, [mapper.namespace + '/' + v].concat(args));
+          } : function (dispatch) {
+            for (var _len13 = arguments.length, args = new Array(_len13 > 1 ? _len13 - 1 : 0), _key17 = 1; _key17 < _len13; _key17++) {
+              args[_key17 - 1] = arguments[_key17];
+            }
+
+            return dispatch.apply(void 0, [v].concat(args));
+          };
+        } else {
+          p[k] = v;
+        }
+
+        return p;
+      }, {});
+    }
+  }
+
+  return res;
+}
+/**
+ * 将一个类标记为提供`store`的生产者
+ *
+ * @param store 要注入的`store`实例
+ */
+
+
+function vuex_Provider(store) {
+  return function (target) {
+    // NOTE: 此处只能通过`prototype`修改且不能使用`Object.defineProperty`否则`App`与`Page`构造器无法复制
+    target.prototype.$store = store;
+  };
+}
+var vuex_$mapper = '__mappers__';
+/**
+ * 将一个类标记为订阅`store`变化的消费者
+ */
+
+function vuex_Consumer() {
+  for (var _len14 = arguments.length, mappers = new Array(_len14), _key18 = 0; _key18 < _len14; _key18++) {
+    mappers[_key18] = arguments[_key18];
+  }
+
+  return function (target) {
+    var _mappers = mappers;
+    var bindings = target.prototype[vuex_$mapper];
+
+    if (bindings) {
+      _mappers.unshift.apply(_mappers, vuex_toConsumableArray(bindings));
+    }
+
+    var options = vuex_createConsumer.apply(void 0, [{
+      onLoad: target.prototype.onLoad,
+      onUnload: target.prototype.onUnload
+    }].concat(_mappers));
+    Object.assign(target.prototype, options);
+  };
+}
+
+(function (_Consumer) {
+  /**
+   * 子模块绑定对象
+   */
+
+  /**
+   * 将一个属性映射为`store`中的指定状态
+   *
+   * @param name `store`中对应状态的名称
+   */
+
+  /**
+   * 将一个属性映射为`store`中的指定状态
+   *
+   * @param func `store`中对应状态的映射方式
+   */
+
+  /**
+   * 将一个属性映射为`store`中的指定状态
+   */
+  function State(arg1, propertyKey) {
+    return bindMap('state', undefined, arg1, propertyKey);
+  }
+
+  _Consumer.State = State;
+
+  function Getter(arg1, propertyKey) {
+    return bindMap('getters', undefined, arg1, propertyKey);
+  }
+
+  _Consumer.Getter = Getter;
+
+  function Mutation(arg1, propertyKey) {
+    return bindMap('mutations', undefined, arg1, propertyKey);
+  }
+
+  _Consumer.Mutation = Mutation;
+
+  function Action(arg1, propertyKey) {
+    return bindMap('actions', undefined, arg1, propertyKey);
+  }
+
+  _Consumer.Action = Action;
+
+  function namespace(name) {
+    return {
+      State: function State(arg1, propertyKey) {
+        return bindMap('state', name, arg1, propertyKey);
+      },
+      Getter: function Getter(arg1, propertyKey) {
+        return bindMap('getters', name, arg1, propertyKey);
+      },
+      Mutation: function Mutation(arg1, propertyKey) {
+        return bindMap('mutations', name, arg1, propertyKey);
+      },
+      Action: function Action(arg1, propertyKey) {
+        return bindMap('actions', name, arg1, propertyKey);
+      }
+    };
+  }
+
+  _Consumer.namespace = namespace;
+})(vuex_Consumer || (vuex_Consumer = {}));
+
+function bindMap(type, ns, arg1, propertyKey) {
+  if (!propertyKey) {
+    return function (target, key) {
+      if (!target[vuex_$mapper]) {
+        Object.defineProperty(target, vuex_$mapper, {
+          value: [],
+          enumerable: false
+        });
+      }
+
+      target[vuex_$mapper].push(vuex_defineProperty({
+        namespace: ns
+      }, type, vuex_defineProperty({}, key, arg1)));
+    };
+  }
+
+  if (!arg1[vuex_$mapper]) {
+    Object.defineProperty(arg1, vuex_$mapper, {
+      value: [],
+      enumerable: false
+    });
+  }
+
+  arg1[vuex_$mapper].push(vuex_defineProperty({
+    namespace: ns
+  }, type, vuex_defineProperty({}, propertyKey, propertyKey)));
+}
 // CONCATENATED MODULE: ./src/request.ts
 function request_async(f) {
   return function () {
@@ -1978,6 +2738,8 @@ var request = Object.assign(defaults(), {
 /* concated harmony reexport storage */__webpack_require__.d(__webpack_exports__, "storage", function() { return storage_namespaceObject; });
 /* concated harmony reexport utils */__webpack_require__.d(__webpack_exports__, "utils", function() { return utils_namespaceObject; });
 /* concated harmony reexport redux */__webpack_require__.d(__webpack_exports__, "redux", function() { return redux_namespaceObject; });
+/* concated harmony reexport vuex */__webpack_require__.d(__webpack_exports__, "vuex", function() { return vuex_namespaceObject; });
+
 
 
 

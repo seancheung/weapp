@@ -1059,6 +1059,7 @@ declare namespace weuse {
     type Reducer<S, T extends Action.Type> = (state: S, action: Action<T>) => S
     type Subscriber = () => void
     type Unsubscribe = () => void
+    type Dispatch<T extends Action.Type, R extends Action<T>> = (action: R) => R
     interface ReducerMap {
       [x: string]: Reducer<any, any>
     }
@@ -1206,6 +1207,242 @@ declare namespace weuse {
        * @param name `store`中对应的子状态的名称
        */
       function namespace(name: string): Namespace
+    }
+  }
+  namespace vuex {
+    interface Store<S> {
+      readonly state: S
+      readonly getters: Record<string, any>
+      dispatch: Dispatch
+      commit: Commit
+      subscribe<P extends MutationPayload>(fn: (mutation: P, state: S) => any): () => void
+    }
+    interface Dispatch {
+      (type: string, payload?: any, options?: DispatchOptions): Promise<any>
+      <P extends Payload>(payloadWithType: P, options?: DispatchOptions): Promise<any>
+    }
+    interface Commit {
+      (type: string, payload?: any, options?: CommitOptions): void
+      <P extends Payload>(payloadWithType: P, options?: CommitOptions): void
+    }
+    interface ActionContext<S, R> {
+      dispatch: Dispatch
+      commit: Commit
+      state: S
+      getters: any
+      rootState: R
+      rootGetters: any
+    }
+    interface Payload {
+      type: string
+    }
+    interface MutationPayload extends Payload {
+      payload: any
+    }
+    interface ActionPayload extends Payload {
+      payload: any
+    }
+    interface DispatchOptions {
+      root?: boolean
+    }
+    interface CommitOptions {
+      root?: boolean
+    }
+    interface StoreOptions<S> {
+      state?: S | (() => S)
+      getters?: GetterTree<S, S>
+      actions?: ActionTree<S, S>
+      mutations?: MutationTree<S>
+      modules?: ModuleTree<S>
+    }
+    type ActionHandler<S, R> = (this: Store<R>, injectee: ActionContext<S, R>, payload?: any) => any
+    interface ActionObject<S, R> {
+      root?: boolean
+      handler: ActionHandler<S, R>
+    }
+    type Getter<S, R> = (state: S, getters: any, rootState: R, rootGetters: any) => any
+    type Action<S, R> = ActionHandler<S, R> | ActionObject<S, R>
+    type Mutation<S> = (state: S, payload?: any) => any
+    interface Module<S, R> {
+      namespaced?: boolean
+      state?: S | (() => S)
+      getters?: GetterTree<S, R>
+      actions?: ActionTree<S, R>
+      mutations?: MutationTree<S>
+      modules?: ModuleTree<R>
+    }
+    interface ModuleOptions {
+      preserveState?: boolean
+    }
+    interface GetterTree<S, R> {
+      [key: string]: Getter<S, R>
+    }
+    interface ActionTree<S, R> {
+      [key: string]: Action<S, R>
+    }
+    interface MutationTree<S> {
+      [key: string]: Mutation<S>
+    }
+    interface ModuleTree<R> {
+      [key: string]: Module<any, R>
+    }
+    /**
+     * 创建一个`store`来以存放应用中所有的`state`
+     *
+     * @param options 选项
+     */
+    function createStore<S>(options: StoreOptions<S>): Store<S>
+    /**
+     * 提供`store`的生产者
+     */
+    interface Provider<S = any> {
+      /**
+       * 注入的`store`
+       */
+      readonly $store: Store<S>
+    }
+    /**
+     * 创建一个提供`store`的生产者
+     *
+     * @param store 要注入的`store`实例
+     * @param options 目标实例
+     */
+    function createProvider<R extends Record<string, any>, S>(
+      store: Store<S>,
+      options: R
+    ): R & Provider
+    type StateMapper<S> =
+      | Array<keyof S>
+      | Record<string, keyof S | ((state: S, getters: any) => void)>
+    type GetterMapper<S> = Array<keyof S> | Record<string, keyof S>
+    type MutationMapper<S> =
+      | Array<keyof S>
+      | Record<string, keyof S | ((commit: Commit, ...args: any[]) => void)>
+    type ActionMapper<S> =
+      | Array<keyof S>
+      | Record<string, keyof S | ((dispatch: Dispatch, ...args: any[]) => void)>
+    interface Mapper<S> {
+      namespace?: string
+      state?: StateMapper<S>
+      getters?: GetterMapper<S>
+      mutations?: MutationMapper<S>
+      actions?: ActionMapper<S>
+    }
+    /**
+     * 创建一个订阅`store`变化的消费者
+     *
+     * @param options 目标实例
+     */
+    function createConsumer<R extends Record<string, any>>(options: R): R
+    /**
+     * 创建一个订阅`store`变化的消费者
+     *
+     * @param options 目标实例
+     * @param mappers 状态绑定
+     */
+    function createConsumer<R extends Record<string, any>, S>(
+      options: R,
+      ...mappers: Array<Mapper<S>>
+    ): R
+    /**
+     * 将一个类标记为提供`store`的生产者
+     *
+     * @param store 要注入的`store`实例
+     */
+    function Provider<S>(store: Store<S>): ClassDecorator
+    /**
+     * 将一个类标记为订阅`store`变化的消费者
+     */
+    function Consumer(): ClassDecorator
+    /**
+     * 将一个类标记为订阅`store`变化的消费者
+     *
+     * @param stateMapper 状态映射函数
+     */
+    function Consumer<S>(...mappers: Array<Mapper<S>>): ClassDecorator
+    namespace Consumer {
+      /**
+       * 子模块绑定对象
+       */
+      interface Namespace {
+        State(name: string): PropertyDecorator
+        State(func: (state: any, getters: any) => any): PropertyDecorator
+        State(target: Object, propertyKey: string | symbol): void
+        Getter(name: string): PropertyDecorator
+        Getter(target: Object, propertyKey: string | symbol): void
+        Mutation(name: string): PropertyDecorator
+        Mutation(func: (commit: Commit, ...args: any[]) => any): PropertyDecorator
+        Mutation(target: Object, propertyKey: string | symbol): void
+        Action(name: string): PropertyDecorator
+        Action(func: (dispatch: Dispatch, ...args: any[]) => any): PropertyDecorator
+        Action(target: Object, propertyKey: string | symbol): void
+      }
+      /**
+       * 将一个属性映射为`store`中的指定状态
+       *
+       * @param name `store`中对应状态的名称
+       */
+      function State(name: string): PropertyDecorator
+      /**
+       * 将一个属性映射为`store`中的指定状态
+       *
+       * @param func `store`中对应状态的映射方式
+       */
+      function State(func: (state: any, getters: any) => any): PropertyDecorator
+      /**
+       * 将一个属性映射为`store`中的指定状态
+       */
+      function State(target: Object, propertyKey: string | symbol): void
+      /**
+       * 将一个属性映射为`store`中的指定`getter`
+       *
+       * @param name `store`中对应`getter`的名称
+       */
+      function Getter(name: string): PropertyDecorator
+      /**
+       * 将一个属性映射为`store`中的指定`getter`
+       */
+      function Getter(target: Object, propertyKey: string | symbol): void
+      /**
+       * 将一个属性映射为`store`中的指定`mutation`
+       *
+       * @param name `store`中对应`mutation`的名称
+       */
+      function Mutation(name: string): PropertyDecorator
+      /**
+       * 将一个属性映射为`store`中的指定`mutation`
+       *
+       * @param func `store`中对应`mutation`的映射方式
+       */
+      function Mutation(func: (commit: Commit, ...args: any[]) => any): PropertyDecorator
+      /**
+       * 将一个属性映射为`store`中的指定`mutation`
+       */
+      function Mutation(target: Object, propertyKey: string | symbol): void
+      /**
+       * 将一个属性映射为`store`中的指定`action`
+       *
+       * @param name `store`中对应`action`的名称
+       */
+      function Action(name: string): PropertyDecorator
+      /**
+       * 将一个属性映射为`store`中的指定`action`
+       *
+       * @param func `store`中对应`action`的映射方式
+       */
+      function Action(func: (dispatch: Dispatch, ...args: any[]) => any): PropertyDecorator
+      /**
+       * 将一个属性映射为`store`中的指定`action`
+       */
+      function Action(target: Object, propertyKey: string | symbol): void
+      /**
+       * 获取`store`中指定子模块的绑定对象
+       *
+       * @param name `store`中对应的子模块的名称
+       */
+      function namespace(name: string): Namespace
+      type MutationMethod = (...args: any[]) => void
+      type ActionMethod = (...args: any[]) => Promise<any>
     }
   }
   const request: request

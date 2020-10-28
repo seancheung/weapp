@@ -672,7 +672,7 @@ const url = weuse.utils.joinUrl('http://myapi.com/', '/api/v1', 'items/', '1')
 
 **weuse.redux**
 
-> 状态管理
+> redux 风格的状态管理
 
 **weuse.redux.createStore(reducer: Reducer): Store**
 
@@ -789,10 +789,10 @@ e.g.
 ```typescript
 @Consumer()
 class MyPage {
-  @State
+  @Consumer.State
   items: any[]
 
-  @State('count')
+  @Consumer.State('count')
   size: number
 
   onLoad() {
@@ -816,8 +816,207 @@ _注: State 绑定可与 Consumer 装饰器中的 StateMapper 参数共存, 若�
 e.g.
 
 ```typescript
-const app = namespace('app')
+const app = Consumer.namespace('app')
 const
+@Consumer()
+class MyPage {
+  @app.State
+  items: any[]
+
+  @app.State('count')
+  size: number
+
+  onLoad() {
+    //...
+    console.log(this.data.items)
+    console.log(this.data.size)
+  }
+}
+```
+
+### Vuex
+
+**weuse.vuex**
+
+> vuex 风格的状态管理
+
+**weuse.vuex.createStore(options: StoreOptions): Store**
+
+创建一个 Store
+
+**weuse.vuex.createProvider(store: Store, options: object): Provider**
+
+创建一个 Provider
+
+e.g.
+
+```javascript
+App(
+  weuse.vuex.createProvider(store, {
+    onLaunch() {
+      //...
+      const state = this.$store.state
+    }
+  })
+)
+```
+
+**weuse.vuex.createConsumer(options: object, ...mappers: Mapper[]): Consumer**
+
+e.g.
+
+```javascript
+Page(
+  weuse.vuex.createConsumer({
+    onLoad() {
+      //...
+    }
+  })
+)
+// 注入state/getters/mutations/actions
+Page(
+  weuse.vuex.createConsumer(
+    {
+      async onLoad() {
+        //...
+        console.log(this.data.items)
+        console.log(this.data.count)
+        await this.login()
+        console.log(this.data.user)
+        this.setName('admin')
+      }
+    },
+    {
+      state: {
+        items: 'items',
+        count: state => state.count
+      },
+      getters: ['name'],
+      mutations: {
+        setUser: 'setName'
+      }
+    },
+    {
+      namespace: 'account',
+      getters: ['user'],
+      actions: ['login']
+    }
+  )
+)
+```
+
+创建一个 Consumer
+
+**weuse.vuex.Provider(store: Store): ClassDecorator**
+
+Provider 装饰器
+
+e.g.
+
+```typescript
+@Provider(store)
+class MyApp {
+  onLaunch() {
+    //...
+    const state = this.$store.state
+  }
+}
+App(new MyApp())
+```
+
+**weuse.vuex.Consumer(...mappers: Mapper[]): ClassDecorator**
+
+Consumer 装饰器
+
+e.g.
+
+```typescript
+@Consumer()
+class MyPage {
+  onLoad() {
+    //...
+  }
+}
+Page(new MyPage())
+
+// 注入state
+@Consumer({
+  state: ['items', 'count']
+})
+class MyPage {
+  onLoad() {
+    //...
+    console.log(this.data.items)
+    console.log(this.data.count)
+  }
+}
+```
+
+**weuse.vuex.Consumer.State(name?: string): PropertyDecorator**
+**weuse.vuex.Consumer.State(func: Function): PropertyDecorator**
+**weuse.vuex.Consumer.Getter(name?: string): PropertyDecorator**
+**weuse.vuex.Consumer.Mutation(name?: string): PropertyDecorator**
+**weuse.vuex.Consumer.Mutation(func: Function): PropertyDecorator**
+**weuse.vuex.Consumer.Action(name?: string): PropertyDecorator**
+**weuse.vuex.Consumer.Action(func: Function): PropertyDecorator**
+
+State/Getter/Mutation/Action 绑定装饰器
+
+e.g.
+
+```typescript
+@Consumer()
+class MyPage {
+  @Consumer.State
+  items: any[]
+
+  @Consumer.State('count')
+  size: number
+
+  @Consumer.State(state => state.count)
+  count: number
+
+  @Consumer.Getter
+  max: number
+
+  @Consumer.Action
+  add: Consumer.ActionMethod
+
+  @Consumer.Mutation
+  setCount: Consumer.MutationMethod
+
+  async onLoad() {
+    //...
+    console.log(this.data.items)
+    console.log(this.data.size)
+    console.log(this.data.count)
+    console.log(this.data.max)
+    await this.add()
+    this.setCount(100)
+  }
+}
+```
+
+_注: State/Getter/Mutation/Action 绑定可与 Consumer 装饰器中的 Mapper 参数共存, 若存在同名属性, 前者会覆盖后者_
+
+**weuse.vuex.Consumer.namespace(name?: string): Namespace**
+
+子模块绑定对象
+
+**weuse.vuex.Consumer.Namespace.State(name?: string): PropertyDecorator**
+**weuse.vuex.Consumer.Namespace.State(func: Function): PropertyDecorator**
+**weuse.vuex.Consumer.Namespace.Getter(name?: string): PropertyDecorator**
+**weuse.vuex.Consumer.Namespace.Mutation(name?: string): PropertyDecorator**
+**weuse.vuex.Consumer.Namespace.Mutation(func: Function): PropertyDecorator**
+**weuse.vuex.Consumer.Namespace.Action(name?: string): PropertyDecorator**
+**weuse.vuex.Consumer.Namespace.Action(func: Function): PropertyDecorator**
+
+子 State/Getter/Mutation/Action 绑定装饰器
+
+e.g.
+
+```typescript
+const app = Consumer.namespace('app')
 @Consumer()
 class MyPage {
   @app.State

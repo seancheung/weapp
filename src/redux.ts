@@ -11,6 +11,7 @@ export declare namespace Action {
 export type Reducer<S, T extends Action.Type> = (state: S, action: Action<T>) => S
 export type Subscriber = () => void
 export type Unsubscribe = () => void
+export type Dispatch<T extends Action.Type, R extends Action<T>> = (action: R) => R
 interface ReducerMap {
   [x: string]: Reducer<any, any>
 }
